@@ -8,26 +8,24 @@ fn sum_calibration_values(input: &str, extra_matches: &Vec<&str>) -> usize {
         .sum()
 }
 
-fn line_number(line: &String, extra_matches: &Vec<&str>) -> usize {
+fn line_number(line: &str, extra_matches: &Vec<&str>) -> usize {
     let numbers = find_numbers(line, extra_matches);
-    format!("{}{}", numbers.first().unwrap(), numbers.last().unwrap()).parse::<usize>().unwrap()
+    format!("{}{}", numbers.first().unwrap(), numbers.last().unwrap())
+        .parse::<usize>()
+        .unwrap()
 }
 
 fn find_numbers(line: &str, extra_matches: &Vec<&str>) -> Vec<usize> {
-    let mut numbers: Vec<(usize, &str)> = vec![];
-
-    for n in 1..=9 {
-        numbers.extend(line.match_indices(&n.to_string()));
-    }
+    let mut numbers: Vec<_> = line.match_indices(char::is_numeric).collect();
 
     for n in extra_matches {
-        numbers.extend(line.match_indices(&n.to_string()));
+        numbers.extend(line.match_indices(n));
     }
 
     numbers.sort();
 
     numbers.iter()
-        .map(|(_, n)| convert_number(*n))
+        .map(|(_, n)| convert_number(n))
         .collect()
 }
 
@@ -57,7 +55,7 @@ mod tests {
     }
 
     #[test]
-    fn it_solves_first_puzzle_part_1() {
+    fn it_solves_puzzle_part_1() {
         let input = read_input_file("input_day01.txt");
 
         assert_eq!(55090, sum_calibration_values(&input, &vec![]));
@@ -78,7 +76,7 @@ mod tests {
     }
 
     #[test]
-    fn it_solves_first_puzzle_part_2() {
+    fn it_solves_puzzle_part_2() {
         let input = read_input_file("input_day01.txt");
 
         assert_eq!(54845, sum_calibration_values(&input, &NUMBERS_AS_WORDS.to_vec()));
