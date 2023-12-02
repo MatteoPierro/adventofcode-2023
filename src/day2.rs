@@ -4,7 +4,7 @@ use crate::input_reader::read_lines;
 #[derive(Debug, Clone, PartialEq)]
 struct Game {
     id: usize,
-    extractions: Vec<Extraction>
+    extractions: Vec<Extraction>,
 }
 
 impl Game {
@@ -22,6 +22,31 @@ impl Game {
 
     fn is_possible(&self) -> bool {
         self.extractions.iter().all(|e| e.is_possible())
+    }
+
+    fn max_red(&self) -> usize {
+        self.extractions.iter()
+            .map(|e| e.red.unwrap_or(0))
+            .max()
+            .unwrap_or(0)
+    }
+
+    fn max_blue(&self) -> usize {
+        self.extractions.iter()
+            .map(|e| e.blue.unwrap_or(0))
+            .max()
+            .unwrap_or(0)
+    }
+
+    fn max_green(&self) -> usize {
+        self.extractions.iter()
+            .map(|e| e.green.unwrap_or(0))
+            .max()
+            .unwrap_or(0)
+    }
+
+    fn power(&self) -> usize {
+        self.max_green() * self.max_red() * self.max_blue()
     }
 }
 
@@ -51,15 +76,15 @@ impl Extraction {
         self.is_possible_blue() && self.is_possible_green() && self.is_possible_red()
     }
 
-    fn is_possible_blue(&self) -> bool{
+    fn is_possible_blue(&self) -> bool {
         is_possible_color(self.blue, 14)
     }
 
-    fn is_possible_green(&self) -> bool{
+    fn is_possible_green(&self) -> bool {
         is_possible_color(self.green, 13)
     }
 
-    fn is_possible_red(&self) -> bool{
+    fn is_possible_red(&self) -> bool {
         is_possible_color(self.red, 12)
     }
 }
@@ -90,6 +115,12 @@ fn calculate_possible_games_ids_sum(lines: &str) -> usize {
         .sum()
 }
 
+fn calculate_power_sum(lines: &str) -> usize {
+    Game::parse_games(read_lines(lines)).iter()
+        .map(|game| game.power())
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
@@ -100,6 +131,24 @@ mod tests {
     fn it_solves_first_part() {
         let input = read_input_file("input_day02.txt");
         assert_eq!(2528, calculate_possible_games_ids_sum(&input));
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = read_input_file("input_day02.txt");
+        assert_eq!(67363, calculate_power_sum(&input));
+    }
+
+    #[test]
+    fn it_calculates_power_sum() {
+        let input = indoc! {"
+        Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+        Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+        Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+        Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+        Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"};
+
+        assert_eq!(2286, calculate_power_sum(input))
     }
 
     #[test]
@@ -132,7 +181,7 @@ mod tests {
                     Extraction { red: Some(4), green: None, blue: Some(3) },
                     Extraction { red: Some(1), blue: Some(6), green: Some(2) },
                     Extraction { red: None, green: Some(2), blue: None },
-                ]
+                ],
             }, Game::parse_game("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green")
         );
     }

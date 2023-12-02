@@ -9,3 +9,4 @@ cargo test dayXY::tests
 ## Solutions
 
 - [Day 1: Trebuchet?!](./src/day1.rs)
+- [Day 2: Cube Conundrum](./src/day2.rs)
