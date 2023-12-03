@@ -10,3 +10,4 @@ cargo test dayXY::tests
 
 - [Day 1: Trebuchet?!](./src/day1.rs)
 - [Day 2: Cube Conundrum](./src/day2.rs)
+- [Day 3: Gear Ratios](./src/day3.rs)

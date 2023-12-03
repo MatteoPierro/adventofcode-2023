@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 
@@ -50,6 +51,31 @@ impl EngineSchematic {
             .map(|n| n.value)
             .sum()
     }
+
+    fn find_multiplier_operations(&self) -> HashMap<(usize, usize), Vec<Number>> {
+        let mut result = HashMap::new();
+
+        for number in &self.numbers {
+            number
+                .neighbours_positions()
+                .iter()
+                .filter(|(x, y)| *x < self.width && *y < self.height)
+                .filter_map(|(x, y)| {
+                    let value = self.schema.get(*y)?.chars().nth(*x)?;
+                    if value == '*' {
+                        Some(((*x, *y), value))
+                    } else {
+                        None
+                    }
+                })
+                .for_each(|(position, _)| {
+                    let entry = result.entry(position.clone()).or_insert(Vec::new());
+                    entry.push(number.clone());
+                });
+        }
+
+        result
+    }
 }
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
@@ -101,7 +127,7 @@ fn find_numbers_in_line(row_index: usize, row: &str) -> Vec<Number> {
     while current_index < row.len() {
         if !chars[current_index].is_numeric() {
             current_index += 1;
-            continue
+            continue;
         }
 
         let mut number: Vec<char> = vec![];
@@ -116,12 +142,24 @@ fn find_numbers_in_line(row_index: usize, row: &str) -> Vec<Number> {
     numbers_in_line
 }
 
-#[cfg(test)]
 fn sum_numbers_close_to_symbols(input: &str) -> usize {
-    let schematic = EngineSchematic::build_form(input);
-    println!("{:?}", schematic.find_numbers_close_to_symbols());
-    schematic.sum_numbers_close_to_symbols()
+    EngineSchematic::build_form(input).sum_numbers_close_to_symbols()
 }
+
+fn sum_gear_ratios(input: &str) -> usize {
+    EngineSchematic::build_form(input)
+        .find_multiplier_operations().iter()
+        .filter_map(|(_, numbers)| {
+            if numbers.len() == 2 {
+                Some(numbers.iter().map(|n| n.value).fold(1, |acc, x| acc * x))
+            } else {
+                None
+            }
+        })
+        .sum()
+}
+
+#[cfg(test)]
 mod tests {
     use indoc::indoc;
 
@@ -131,7 +169,32 @@ mod tests {
     #[test]
     fn it_solves_first_part() {
         let input = read_input_file("input_day03.txt");
+
         assert_eq!(560670, sum_numbers_close_to_symbols(&input));
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = read_input_file("input_day03.txt");
+
+        assert_eq!(91622824, sum_gear_ratios(&input));
+    }
+
+    #[test]
+    fn it_finds_multiplier_operations() {
+        let input = indoc! {"
+        467..114..
+        ...*......
+        ..35..633.
+        ......#...
+        617*......
+        .....+.58.
+        ..592.....
+        ......755.
+        ...$.*....
+        .664.598.."};
+
+        assert_eq!(467835, sum_gear_ratios(input));
     }
 
     #[test]
