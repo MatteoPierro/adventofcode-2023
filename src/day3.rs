@@ -26,24 +26,25 @@ impl EngineSchematic {
         EngineSchematic { height, width, numbers, schema }
     }
 
-    fn find_numbers_close_to_symbols(&self) -> Vec<Number> {
-        let mut numbers_close_to_symbols = vec![];
+    fn find_numbers_close_to_symbols(&self) -> Vec<&Number> {
+        self.numbers.iter()
+            .filter_map(|number| {
+                if self.has_a_symbol_neighbour(number) {
+                    Some(number)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
 
-        for number in &self.numbers {
-            let any_symbol = number.neighbours_positions()
-                .iter()
-                .filter(|(x, y)| *x < self.width && *y < self.height)
-                .any(|(x, y)| -> bool  {
-                    let neighbour = self.schema[*y].chars().nth(*x).unwrap();
-                    neighbour != '.' && !neighbour.is_ascii_digit()
-                });
-
-            if any_symbol {
-                numbers_close_to_symbols.push(number.clone());
-            }
-        }
-
-        numbers_close_to_symbols
+    fn has_a_symbol_neighbour(&self, number: &Number) -> bool {
+        number.neighbours_positions().iter()
+            .filter(|(x, y)| *x < self.width && *y < self.height)
+            .any(|(x, y)| -> bool  {
+                let neighbour = self.schema[*y].chars().nth(*x).unwrap();
+                neighbour != '.' && !neighbour.is_ascii_digit()
+            })
     }
 
     fn sum_numbers_close_to_symbols(&self) -> usize {
@@ -69,8 +70,9 @@ impl EngineSchematic {
                     }
                 })
                 .for_each(|(position, _)| {
-                    let entry = result.entry(position.clone()).or_insert(Vec::new());
-                    entry.push(number.clone());
+                    result.entry(position.clone())
+                        .or_insert(Vec::new())
+                        .push(number.clone());
                 });
         }
 
