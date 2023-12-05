@@ -12,3 +12,4 @@ cargo test dayXY::tests
 - [Day 2: Cube Conundrum](./src/day2.rs)
 - [Day 3: Gear Ratios](./src/day3.rs)
 - [Day 4: Scratchcards](./src/day4.rs)
+- [Day 5: If You Give A Seed A Fertilizer](./src/day5.rs)

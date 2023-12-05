@@ -130,6 +130,34 @@ impl SeedRange {
     }
 }
 
+fn calculate_min_location(ranges: Vec<SeedRange>, almanac: Almanac) -> usize {
+    let mut reversed = almanac.maps.clone();
+    reversed.reverse();
+    let reversed: Vec<_> = reversed.iter().map(|m| m.reverse()).collect();
+
+    let location_map = reversed.first().unwrap();
+
+    // println!("{:?}", reversed);
+    // println!("{:?}", location_map);
+
+    let mut lowest_location_range: Range = location_map.ranges.iter().min_by(|r1, r2| r1.source.cmp(&r2.source)).unwrap().clone();
+    if lowest_location_range.source != 0 {
+        lowest_location_range = Range { source: 0, destination: lowest_location_range.source - 1, length: lowest_location_range.source };
+    }
+
+    // println!("{:?}", lowest_location_range);
+    let mut min_location: Option<usize> = None;
+    for location in lowest_location_range.source..=lowest_location_range.destination {
+        let seed = reversed.iter().fold(location, |curr, map| map.map_number(curr));
+        if ranges.iter().any(|r| r.is_including(seed)) {
+            min_location = Some(location);
+            break;
+        }
+        // println!("{:?} location {:?}", seed, location);
+    }
+    min_location.unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
@@ -138,6 +166,7 @@ mod tests {
     use crate::input_reader::{read_input_file, read_lines};
 
     #[test]
+    #[ignore] // slow!! it completes in > 2 minutes
     fn it_solves_second_part() {
         let input = read_input_file("input_day05.txt");
         let almanac = parse_almanac(read_lines(&input));
@@ -213,34 +242,6 @@ mod tests {
 
         let min_location = calculate_min_location(ranges.to_vec(), almanac);
         assert_eq!(46, min_location);
-    }
-
-    fn calculate_min_location(ranges: Vec<SeedRange>, almanac: Almanac) -> usize {
-        let mut reversed = almanac.maps.clone();
-        reversed.reverse();
-        let reversed: Vec<_> = reversed.iter().map(|m| m.reverse()).collect();
-
-        let location_map = reversed.first().unwrap();
-
-        // println!("{:?}", reversed);
-        // println!("{:?}", location_map);
-
-        let mut lowest_location_range: Range = location_map.ranges.iter().min_by(|r1, r2| r1.source.cmp(&r2.source)).unwrap().clone();
-        if lowest_location_range.source != 0 {
-            lowest_location_range = Range { source: 0, destination: lowest_location_range.source - 1, length: lowest_location_range.source };
-        }
-
-        // println!("{:?}", lowest_location_range);
-        let mut min_location: Option<usize> = None;
-        for location in lowest_location_range.source..=lowest_location_range.destination {
-            let seed = reversed.iter().fold(location, |curr, map| map.map_number(curr));
-            if ranges.iter().any(|r| r.is_including(seed)) {
-                min_location = Some(location);
-                break;
-            }
-            // println!("{:?} location {:?}", seed, location);
-        }
-        min_location.unwrap()
     }
 
     #[test]
