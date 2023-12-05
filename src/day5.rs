@@ -23,6 +23,10 @@ impl Range {
         let step = n - self.source;
         self.destination + step
     }
+
+    fn reverse(&self) -> Self {
+        Self { destination: self.source, source: self.destination, length: self.length }
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -38,6 +42,17 @@ impl Map {
             range.get(number)
         } else {
             number
+        }
+    }
+
+    fn reverse(&self) -> Map {
+        let mut ranges = self.ranges.clone();
+        ranges.reverse();
+        let ranges = ranges.iter().map(|r| r.reverse()).collect();
+        Map {
+            destination: self.source.clone(),
+            source: self.destination.clone(),
+            ranges
         }
     }
 }
@@ -99,11 +114,49 @@ fn parse_almanac(input: Vec<String>) -> Almanac {
     Almanac { seeds, maps }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct SeedRange {
+    start: usize,
+    end: usize
+}
+
+impl SeedRange {
+    fn build_from(start: usize, length: usize) -> Self {
+        SeedRange { start, end: start + length - 1 }
+    }
+
+    fn is_including(&self, seed: usize) -> bool{
+        self.start <= seed && seed <= self.end
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
+
     use crate::day5::*;
     use crate::input_reader::{read_input_file, read_lines};
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = read_input_file("input_day05.txt");
+        let almanac = parse_almanac(read_lines(&input));
+        let ranges = [
+            SeedRange::build_from(2880930400,17599561),
+            SeedRange::build_from(549922357,200746426),
+            SeedRange::build_from(1378552684,43534336),
+            SeedRange::build_from(155057073,56546377),
+            SeedRange::build_from(824205101,378503603),
+            SeedRange::build_from(1678376802,130912435),
+            SeedRange::build_from(2685513694,137778160),
+            SeedRange::build_from(2492361384,188575752),
+            SeedRange::build_from(3139914842,1092214826),
+            SeedRange::build_from(2989476473,58874625)
+        ];
+
+        let min_location = calculate_min_location(ranges.to_vec(), almanac);
+        println!("min location {:?}", min_location); // 78775051
+    }
 
     #[test]
     fn it_solves_first_part() {
@@ -112,6 +165,82 @@ mod tests {
         let almanac = parse_almanac(read_lines(&input));
 
         assert_eq!(227653707, almanac.lowest_location());
+    }
+
+    #[test]
+    fn it_calculates_reverse_map() {
+        let input = indoc! {"
+        seeds: 79 14 55 13
+
+        seed-to-soil map:
+        50 98 2
+        52 50 48
+
+        soil-to-fertilizer map:
+        0 15 37
+        37 52 2
+        39 0 15
+
+        fertilizer-to-water map:
+        49 53 8
+        0 11 42
+        42 0 7
+        57 7 4
+
+        water-to-light map:
+        88 18 7
+        18 25 70
+
+        light-to-temperature map:
+        45 77 23
+        81 45 19
+        68 64 13
+
+        temperature-to-humidity map:
+        0 69 1
+        1 0 69
+
+        humidity-to-location map:
+        60 56 37
+        56 93 4"};
+
+        let ranges = [
+            SeedRange::build_from(79,14),
+            SeedRange::build_from(55,13)
+        ];
+
+        let almanac = parse_almanac(read_lines(input));
+
+        let min_location = calculate_min_location(ranges.to_vec(), almanac);
+        assert_eq!(46, min_location);
+    }
+
+    fn calculate_min_location(ranges: Vec<SeedRange>, almanac: Almanac) -> usize {
+        let mut reversed = almanac.maps.clone();
+        reversed.reverse();
+        let reversed: Vec<_> = reversed.iter().map(|m| m.reverse()).collect();
+
+        let location_map = reversed.first().unwrap();
+
+        // println!("{:?}", reversed);
+        // println!("{:?}", location_map);
+
+        let mut lowest_location_range: Range = location_map.ranges.iter().min_by(|r1, r2| r1.source.cmp(&r2.source)).unwrap().clone();
+        if lowest_location_range.source != 0 {
+            lowest_location_range = Range { source: 0, destination: lowest_location_range.source - 1, length: lowest_location_range.source };
+        }
+
+        // println!("{:?}", lowest_location_range);
+        let mut min_location: Option<usize> = None;
+        for location in lowest_location_range.source..=lowest_location_range.destination {
+            let seed = reversed.iter().fold(location, |curr, map| map.map_number(curr));
+            if ranges.iter().any(|r| r.is_including(seed)) {
+                min_location = Some(location);
+                break;
+            }
+            // println!("{:?} location {:?}", seed, location);
+        }
+        min_location.unwrap()
     }
 
     #[test]
