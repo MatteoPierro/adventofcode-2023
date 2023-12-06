@@ -18,9 +18,16 @@ mod tests {
 
     #[test]
     fn it_solves_first_part() {
-        let times = vec![56,71,79,99];
+        let times = vec![56, 71, 79, 99];
         let distance = vec![334, 1135, 1350, 2430];
         assert_eq!(211904, calculate_record_breaks(times, distance));
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let times = vec![56717999];
+        let distance = vec![334113513502430];
+        assert_eq!(43364472, calculate_record_breaks(times, distance));
     }
 
     #[test]
