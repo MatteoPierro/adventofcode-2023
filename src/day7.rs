@@ -27,38 +27,62 @@ struct Hand {
 
 impl Hand {
     fn new(hand: &str) -> Self {
+        Self::build_with(hand, find_hand_type)
+    }
+
+    fn build_with(hand: &str, find_hand_type: fn(HashMap<&char, usize>) -> HandType) -> Hand {
         let parts: Vec<_> = hand.split(" ").collect();
         let cards: Vec<_> = parts[0].chars().collect();
         let bid = parts[1].parse::<usize>().unwrap();
 
-        let occurrences: HashMap<_, _> = cards.iter()
+        let card_occurrences: HashMap<_, _> = cards.iter()
             .sorted()
             .group_by(|&x| x)
             .into_iter()
-            .map(|(_, v)| v.count())
-            .sorted()
-            .group_by(|&x| x)
-            .into_iter()
-            .map(|(k, v)| (k, v.count()))
+            .map(|(c, v)| (c, v.count()))
             .collect();
 
-        let mut hand_type = HighCard;
-        if occurrences.contains_key(&5) {
-            hand_type = FiveOfAKind
-        } else if occurrences.contains_key(&4) {
-            hand_type = FourOfAKind
-        } else if occurrences.contains_key(&3) && occurrences.contains_key(&2) {
-            hand_type = FullHouse
-        } else if occurrences.contains_key(&3) {
-            hand_type = ThreeOfAKind
-        } else if occurrences.contains_key(&2) && *occurrences.get(&2).unwrap() == 2 {
-            hand_type = TwoPairs
-        } else if occurrences.contains_key(&2) {
-            hand_type = OnePair
-        }
+        let hand_type = find_hand_type(card_occurrences);
 
         Hand { cards, bid, hand_type }
     }
+}
+
+fn find_hand_type(card_occurrences: HashMap<&char, usize>) -> HandType {
+    let occurrences: HashMap<_, _> = card_occurrences
+        .iter()
+        .map(|(_, v)| v)
+        .sorted()
+        .group_by(|&x| x)
+        .into_iter()
+        .map(|(k, v)| (k, v.count()))
+        .collect();
+
+    if occurrences.contains_key(&5) {
+        return FiveOfAKind;
+    }
+
+    if occurrences.contains_key(&4) {
+        return FourOfAKind;
+    }
+
+    if occurrences.contains_key(&3) && occurrences.contains_key(&2) {
+        return FullHouse;
+    }
+
+    if occurrences.contains_key(&3) {
+        return ThreeOfAKind;
+    }
+
+    if occurrences.contains_key(&2) && *occurrences.get(&2).unwrap() == 2 {
+        return TwoPairs;
+    }
+
+    if occurrences.contains_key(&2) {
+        return OnePair;
+    }
+
+    HighCard
 }
 
 const CARD_ORDER: [char; 13] = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
