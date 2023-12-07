@@ -50,22 +50,22 @@ impl Hand {
 
 fn find_hand_type_with_jolly(mut card_occurrences: HashMap<&char, usize>) -> HandType {
     if !card_occurrences.contains_key(&'J') {
-        return find_hand_type(card_occurrences)
+        return find_hand_type(card_occurrences);
     }
 
     let jolly_occurrences = card_occurrences.remove(&'J').unwrap();
     let occurrences: HashMap<_, _> = score_occurrences(card_occurrences);
 
     if occurrences.contains_key(&4) {
-        return FiveOfAKind
+        return FiveOfAKind;
     }
 
     if occurrences.contains_key(&3) && jolly_occurrences == 2 {
-        return FiveOfAKind
+        return FiveOfAKind;
     }
 
     if occurrences.contains_key(&3) {
-        return FourOfAKind
+        return FourOfAKind;
     }
 
     if occurrences.contains_key(&2) && *occurrences.get(&2).unwrap() == 2 {
@@ -85,11 +85,10 @@ fn find_hand_type_with_jolly(mut card_occurrences: HashMap<&char, usize>) -> Han
     }
 
     match jolly_occurrences {
-        5 => FiveOfAKind,
-        4 => FiveOfAKind,
-        3 => FourOfAKind,
+        1 => OnePair,
         2 => ThreeOfAKind,
-        _ => OnePair
+        3 => FourOfAKind,
+        _ => FiveOfAKind
     }
 }
 
@@ -154,13 +153,10 @@ fn hand_comparator(current: &Hand, other: &Hand, card_order: [char; 13]) -> Orde
 }
 
 fn total_winning(input: &str, card_order: [char; 13], hand_builder: fn(&String) -> Hand) -> usize {
-    let sorted_hands: Vec<_> = read_lines(input).iter()
+    read_lines(input).iter()
         .map(hand_builder)
         .sorted_by(|current, other| hand_comparator(current, other, card_order))
         .enumerate()
-        .collect();
-
-    sorted_hands.iter()
         .map(|(rank, h)| h.bid * (rank + 1))
         .sum()
 }
@@ -215,7 +211,7 @@ mod tests {
         assert_eq!(Hand { cards: vec!['3', '2', 'T', '3', 'K'], bid: 765, hand_type: OnePair }, Hand::build_with("32T3K 765", find_hand_type_with_jolly));
         assert_eq!(Hand { cards: vec!['T', '5', '5', 'J', '5'], bid: 684, hand_type: FourOfAKind }, Hand::build_with("T55J5 684", find_hand_type_with_jolly));
         assert_eq!(Hand { cards: vec!['K', 'K', '6', '7', '7'], bid: 28, hand_type: TwoPairs }, Hand::build_with("KK677 28", find_hand_type_with_jolly));
-        assert_eq!(Hand { cards: vec!['K', 'T', 'J', 'J', 'T'], bid: 220, hand_type: FourOfAKind  }, Hand::build_with("KTJJT 220", find_hand_type_with_jolly));
+        assert_eq!(Hand { cards: vec!['K', 'T', 'J', 'J', 'T'], bid: 220, hand_type: FourOfAKind }, Hand::build_with("KTJJT 220", find_hand_type_with_jolly));
         assert_eq!(Hand { cards: vec!['Q', 'Q', 'Q', 'J', 'A'], bid: 483, hand_type: FourOfAKind }, Hand::build_with("QQQJA 483", find_hand_type_with_jolly));
     }
 
