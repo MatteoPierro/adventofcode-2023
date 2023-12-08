@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use num::integer::lcm;
 
 use regex::Regex;
 use crate::input_reader::read_lines;
@@ -16,12 +17,30 @@ fn parse_network(row_instructions: Vec<&String>) -> HashMap<String, (String, Str
     row_instructions.iter().map(|n| parse_node(n)).collect()
 }
 
-fn calculate_steps(instructions: &str, network: HashMap<String, (String, String)>) -> usize {
-    let mut current_node = "AAA";
+fn calculate_steps(
+    instructions: &str,
+    network: HashMap<String, (String, String)>,
+    select_start_nodes: fn(&str) -> bool,
+    select_steps: fn(&str) -> bool,
+) -> usize {
+    network.keys()
+        .filter(|node| select_start_nodes(node.as_str()))
+        .map(|current_node|
+            calculate_step_for_single_node(instructions, &network, select_steps, &mut current_node.clone())
+        ).reduce(lcm)
+        .unwrap()
+}
+
+fn calculate_step_for_single_node<'a>(
+    instructions: &str,
+    network: &'a HashMap<String, (String, String)>,
+    select_steps: fn(&str) -> bool,
+    mut current_node: &'a str,
+) -> usize {
     let mut steps = 0;
 
     for instruction in instructions.chars().into_iter().cycle() {
-        if current_node == "ZZZ" {
+        if select_steps(current_node) {
             return steps;
         }
 
@@ -35,6 +54,15 @@ fn calculate_steps(instructions: &str, network: HashMap<String, (String, String)
     }
 
     panic!("ZZZ not found");
+}
+
+fn is_aaa_node(node: &str) -> bool {
+    node == "AAA"
+}
+
+
+fn has_reached_zzz(node: &str) -> bool {
+    node == "ZZZ"
 }
 
 fn parse_input(input: &str) -> (String, HashMap<String, (String, String)>) {
@@ -58,7 +86,7 @@ mod tests {
         let input = read_input_file("input_day08.txt");
 
         let (instructions, network) = parse_input(&input);
-        assert_eq!(13301, calculate_steps(&instructions, network));
+        assert_eq!(13301, calculate_steps(&instructions, network, is_aaa_node, has_reached_zzz));
     }
 
     #[test]
@@ -76,6 +104,6 @@ mod tests {
 
 
         let (instructions, network) = parse_input(input);
-        assert_eq!(2, calculate_steps(&instructions, network));
+        assert_eq!(2, calculate_steps(&instructions, network, is_aaa_node, has_reached_zzz));
     }
 }
