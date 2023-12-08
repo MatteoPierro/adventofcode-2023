@@ -17,16 +17,24 @@ fn parse_network(row_instructions: Vec<&String>) -> HashMap<String, (String, Str
     row_instructions.iter().map(|n| parse_node(n)).collect()
 }
 
+fn parse_input(input: &str) -> (String, HashMap<String, (String, String)>) {
+    let lines = read_lines(&input);
+    let instructions = lines.get(0).unwrap().clone();
+    let row_instructions = lines[2..].iter().clone().collect();
+    let network: HashMap<_, _> = parse_network(row_instructions);
+    (instructions, network)
+}
+
 fn calculate_steps(
     instructions: &str,
     network: HashMap<String, (String, String)>,
     select_start_nodes: fn(&str) -> bool,
-    select_steps: fn(&str) -> bool,
+    is_end_node: fn(&str) -> bool,
 ) -> usize {
     network.keys()
         .filter(|node| select_start_nodes(node.as_str()))
         .map(|current_node|
-            calculate_step_for_single_node(instructions, &network, select_steps, &mut current_node.clone())
+            calculate_step_for_single_node(instructions, &network, is_end_node, &mut current_node.clone())
         ).reduce(lcm)
         .unwrap()
 }
@@ -34,13 +42,13 @@ fn calculate_steps(
 fn calculate_step_for_single_node<'a>(
     instructions: &str,
     network: &'a HashMap<String, (String, String)>,
-    select_steps: fn(&str) -> bool,
+    is_end_node: fn(&str) -> bool,
     mut current_node: &'a str,
 ) -> usize {
     let mut steps = 0;
 
     for instruction in instructions.chars().into_iter().cycle() {
-        if select_steps(current_node) {
+        if is_end_node(current_node) {
             return steps;
         }
 
@@ -56,6 +64,14 @@ fn calculate_step_for_single_node<'a>(
     panic!("ZZZ not found");
 }
 
+fn is_ending_with_an_a(node: &str) -> bool {
+    node.ends_with('A')
+}
+
+fn is_ending_with_an_z(node: &str) -> bool {
+    node.ends_with('Z')
+}
+
 fn is_aaa_node(node: &str) -> bool {
     node == "AAA"
 }
@@ -63,15 +79,6 @@ fn is_aaa_node(node: &str) -> bool {
 
 fn has_reached_zzz(node: &str) -> bool {
     node == "ZZZ"
-}
-
-fn parse_input(input: &str) -> (String, HashMap<String, (String, String)>) {
-    let lines = read_lines(&input);
-    let instructions1 = lines.get(0).unwrap();
-    let row_instructions = lines[2..].iter().clone().collect();
-    let network1: HashMap<_, _> = parse_network(row_instructions);
-    let (instructions, network) = (instructions1.clone(), network1);
-    (instructions, network)
 }
 
 #[cfg(test)]
@@ -87,6 +94,32 @@ mod tests {
 
         let (instructions, network) = parse_input(&input);
         assert_eq!(13301, calculate_steps(&instructions, network, is_aaa_node, has_reached_zzz));
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = read_input_file("input_day08.txt");
+
+        let (instructions, network) = parse_input(&input);
+        assert_eq!(7309459565207, calculate_steps(&instructions, network, is_ending_with_an_a, is_ending_with_an_z));
+    }
+
+    #[test]
+    fn it_calculates_steps_for_ghost() {
+        let input = indoc! {"
+        LR
+
+        11A = (11B, XXX)
+        11B = (XXX, 11Z)
+        11Z = (11B, XXX)
+        22A = (22B, XXX)
+        22B = (22C, 22C)
+        22C = (22Z, 22Z)
+        22Z = (22B, 22B)
+        XXX = (XXX, XXX)"};
+
+        let (instructions, network) = parse_input(input);
+        assert_eq!(6, calculate_steps(&instructions, network, is_ending_with_an_a, is_ending_with_an_z));
     }
 
     #[test]
