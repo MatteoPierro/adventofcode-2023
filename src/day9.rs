@@ -2,7 +2,8 @@ use num::Zero;
 
 use crate::input_reader::read_lines;
 
-fn find_next_value(mut sequence: Vec<isize>) -> isize {
+fn find_next_values(mut sequence: Vec<isize>) -> (isize, isize) {
+    let mut first_numbers = vec![sequence.first().unwrap().clone()];
     let mut last_numbers = vec![sequence.last().unwrap().clone()];
 
     loop {
@@ -15,17 +16,21 @@ fn find_next_value(mut sequence: Vec<isize>) -> isize {
         }
 
         sequence = new_sequence;
+        first_numbers.push(sequence.first().unwrap().clone());
         last_numbers.push(sequence.last().unwrap().clone());
     }
 
-    last_numbers.iter().sum()
+    (
+        first_numbers.iter().rev().fold(0, |acc, e| e - acc),
+        last_numbers.iter().sum()
+    )
 }
 
-fn calculate_sum_of_next_values(input: &str) -> isize {
+fn calculate_sum_of_next_values(input: &str) -> (isize, isize) {
     read_lines(input).iter()
         .map(|sequence| parse_sequence(sequence))
-        .map(|sequence| find_next_value(sequence))
-        .sum()
+        .map(|sequence| find_next_values(sequence))
+        .fold((0, 0), |(acc0, acc1), (e0, e1)| (acc0 + e0, acc1 + e1))
 }
 
 fn parse_sequence(sequence: &String) -> Vec<isize> {
@@ -42,10 +47,10 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_part() {
+    fn it_solves_puzzle() {
         let input = read_input_file("input_day09.txt");
 
-        assert_eq!(1987402313, calculate_sum_of_next_values(&input));
+        assert_eq!((900, 1987402313), calculate_sum_of_next_values(&input));
     }
 
     #[test]
@@ -55,13 +60,13 @@ mod tests {
         1 3 6 10 15 21
         10 13 16 21 30 45"};
 
-        assert_eq!(114, calculate_sum_of_next_values(input));
+        assert_eq!((2, 114), calculate_sum_of_next_values(input));
     }
 
     #[test]
-    fn it_finds_next_value() {
-        assert_eq!(18, find_next_value(vec![0, 3, 6, 9, 12, 15]));
-        assert_eq!(28, find_next_value(vec![1, 3, 6, 10, 15, 21]));
-        assert_eq!(68, find_next_value(vec![10, 13, 16, 21, 30, 45]));
+    fn it_finds_next_values() {
+        assert_eq!((-3, 18), find_next_values(vec![0, 3, 6, 9, 12, 15]));
+        assert_eq!((0, 28), find_next_values(vec![1, 3, 6, 10, 15, 21]));
+        assert_eq!((5, 68), find_next_values(vec![10, 13, 16, 21, 30, 45]));
     }
 }

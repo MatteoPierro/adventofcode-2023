@@ -16,3 +16,4 @@ cargo test dayXY::tests
 - [Day 6: Wait For It](./src/day6.rs)
 - [Day 7: Camel Cards](./src/day7.rs)
 - [Day 8: Haunted Wasteland](./src/day8.rs)
+- [Day 9: Mirage Maintenance](./src/day9.rs)
