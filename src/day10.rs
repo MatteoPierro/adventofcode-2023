@@ -1,3 +1,6 @@
+use std::ops::Div;
+use itertools::Itertools;
+
 use crate::day10::Direction::*;
 use crate::input_reader::read_lines;
 
@@ -212,6 +215,57 @@ fn calculate_steps(input: &str) -> usize {
     steps
 }
 
+fn find_polygon(input: &str) -> Vec<Position> {
+    let maze: Vec<_> = read_lines(input).iter()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect();
+
+    let starting_position = maze.iter().enumerate()
+        .find_map(|(y, line)| {
+            line.iter().position(|&c| c == 'S').map(|x| Position(x, y))
+        }).unwrap();
+
+    let mut polygon = vec![starting_position];
+
+    let mut current = [North, South, East, West]
+        .iter()
+        .map(|&direction| Animal { position: starting_position, direction })
+        .filter_map(|animal| Start::walk(&animal))
+        .find_or_first(|animal| walk(&animal, &maze) != None)
+        .unwrap();
+    polygon.push(current.position);
+
+    while current.position != starting_position {
+        current = walk(&current, &maze).unwrap();
+        polygon.push(current.position);
+    }
+
+    polygon
+}
+
+// Calculate enclosed point using Pick's theorem
+// https://en.wikipedia.org/wiki/Pick's_theorem
+fn count_enclosed_points(input: &str) -> isize {
+    let polygon = find_polygon(input);
+    let area = calculate_area(&polygon);
+    let b = polygon.iter().count() as isize;
+    area + 1 - (b / 2)
+}
+
+// Calculate area using the Shoelace formula
+// https://en.wikipedia.org/wiki/Shoelace_formula
+fn calculate_area(polygon: &Vec<Position>) -> isize {
+    polygon.windows(2)
+        .map(|positions| {
+            let Position(x1, y1) = positions[0];
+            let Position(x2, y2) = positions[1];
+            (x1 * y2) as isize - (x2 * y1) as isize
+        })
+        .sum::<isize>()
+        .abs()
+        .div(2)
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -224,6 +278,29 @@ mod tests {
     fn it_solves_first_part() {
         let input = read_input_file("input_day10.txt");
         assert_eq!(6812, calculate_steps(&input));
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = read_input_file("input_day10.txt");
+
+        assert_eq!(527, count_enclosed_points(&input));
+    }
+
+    #[test]
+    fn it_finds_polygon() {
+        let input = indoc! {"
+        ...........
+        .S-------7.
+        .|F-----7|.
+        .||.....||.
+        .||.....||.
+        .|L-7.F-J|.
+        .|..|.|..|.
+        .L--J.L--J.
+        ..........."};
+
+        assert_eq!(4, count_enclosed_points(input));
     }
 
     #[test]
