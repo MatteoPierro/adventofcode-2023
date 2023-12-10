@@ -183,56 +183,17 @@ fn walk(animal: &Animal, maze: &Vec<Vec<char>>) -> Option<Animal> {
 }
 
 fn calculate_steps(input: &str) -> usize {
-    let maze: Vec<_> = read_lines(input).iter()
-        .map(|line| line.chars().collect::<Vec<_>>())
-        .collect();
-
-    let position = maze.iter().enumerate()
-        .find_map(|(y, line)| {
-            line.iter().position(|&c| c == 'S').map(|x| Position(x, y))
-        }).unwrap();
-
-    let after_first_step: Vec<_> = [North, South, East, West]
-        .iter()
-        .map(|&direction| Animal { position, direction })
-        .filter_map(|animal| Start::walk(&animal))
-        .flat_map(|animal| walk(&animal, &maze))
-        .collect();
-
-    if after_first_step.iter().count() != 2 {
-        panic!("there should be only two starting point")
-    }
-
-    let mut first: Animal = after_first_step.first().unwrap().clone();
-    let mut second: Animal = after_first_step.last().unwrap().clone();
-    let mut steps: usize = 2;
-
-    while first.position != second.position {
-        first = walk(&first, &maze).unwrap();
-        second = walk(&second, &maze).unwrap();
-        steps += 1;
-    }
-    steps
+    find_polygon(input).iter().count().div(2)
 }
 
 fn find_polygon(input: &str) -> Vec<Position> {
-    let maze: Vec<_> = read_lines(input).iter()
-        .map(|line| line.chars().collect::<Vec<_>>())
-        .collect();
+    let maze: Vec<_> = parse_maze(input);
 
-    let starting_position = maze.iter().enumerate()
-        .find_map(|(y, line)| {
-            line.iter().position(|&c| c == 'S').map(|x| Position(x, y))
-        }).unwrap();
+    let starting_position = find_starting_position(&maze);
 
     let mut polygon = vec![starting_position];
 
-    let mut current = [North, South, East, West]
-        .iter()
-        .map(|&direction| Animal { position: starting_position, direction })
-        .filter_map(|animal| Start::walk(&animal))
-        .find_or_first(|animal| walk(&animal, &maze) != None)
-        .unwrap();
+    let mut current = start_walking(&maze, starting_position);
     polygon.push(current.position);
 
     while current.position != starting_position {
@@ -241,6 +202,28 @@ fn find_polygon(input: &str) -> Vec<Position> {
     }
 
     polygon
+}
+
+fn start_walking(maze: &Vec<Vec<char>>, starting_position: Position) -> Animal {
+    [North, South, East, West]
+        .iter()
+        .map(|&direction| Animal { position: starting_position, direction })
+        .filter_map(|animal| Start::walk(&animal))
+        .find_or_first(|animal| walk(&animal, &maze) != None)
+        .unwrap()
+}
+
+fn find_starting_position(maze: &Vec<Vec<char>>) -> Position {
+    maze.iter().enumerate()
+        .find_map(|(y, line)| {
+            line.iter().position(|&c| c == 'S').map(|x| Position(x, y))
+        }).unwrap()
+}
+
+fn parse_maze(input: &str) -> Vec<Vec<char>> {
+    read_lines(input).iter()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect()
 }
 
 // Calculate enclosed point using Pick's theorem
