@@ -21,164 +21,128 @@ struct Animal {
     direction: Direction,
 }
 
-trait Tile {
-    fn walk(animal: &Animal) -> Option<Animal>;
-}
-
-struct Start;
-
-impl Tile for Start {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        let animal = match animal.direction {
-            North => Animal {
-                position: Position(animal.position.0, animal.position.1 - 1),
-                direction: North,
-            },
-            South => Animal {
-                position: Position(animal.position.0, animal.position.1 + 1),
-                direction: South,
-            },
-            East => Animal {
-                position: Position(animal.position.0 + 1, animal.position.1),
-                direction: East,
-            },
-            West => Animal {
-                position: Position(animal.position.0 - 1, animal.position.1),
-                direction: West,
-            }
-        };
-
-        Some(animal)
-    }
-}
-
-struct Dot;
-
-impl Tile for Dot {
-    fn walk(_animal: &Animal) -> Option<Animal> {
-        None
-    }
-}
-
-struct L;
-
-impl Tile for L {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            South => Some(Animal {
-                position: Position(animal.position.0 + 1, animal.position.1),
-                direction: East,
-            }),
-            West => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 - 1),
-                direction: North,
-            }),
-            _ => None
-        }
-    }
-}
-
-struct J;
-
-impl Tile for J {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            South => Some(Animal {
-                position: Position(animal.position.0 - 1, animal.position.1),
-                direction: West,
-            }),
-            East => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 - 1),
-                direction: North,
-            }),
-            _ => None
-        }
-    }
-}
-
-struct Seven;
-
-impl Tile for Seven {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            North => Some(Animal {
-                position: Position(animal.position.0 - 1, animal.position.1),
-                direction: West,
-            }),
-            East => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 + 1),
-                direction: South,
-            }),
-            _ => None
-        }
-    }
-}
-
-struct F;
-
-impl Tile for F {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            North => Some(Animal {
-                position: Position(animal.position.0 + 1, animal.position.1),
-                direction: East,
-            }),
-            West => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 + 1),
-                direction: South,
-            }),
-            _ => None
-        }
-    }
-}
-
-struct VerticalPipe;
-
-impl Tile for VerticalPipe {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            North => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 - 1),
-                direction: North,
-            }),
-            South => Some(Animal {
-                position: Position(animal.position.0, animal.position.1 + 1),
-                direction: South,
-            }),
-            _ => None
-        }
-    }
-}
-
-struct HorizontalPipe;
-
-impl Tile for HorizontalPipe {
-    fn walk(animal: &Animal) -> Option<Animal> {
-        match animal.direction {
-            West => Some(Animal {
-                position: Position(animal.position.0 - 1, animal.position.1),
-                direction: West,
-            }),
-            East => Some(Animal {
-                position: Position(animal.position.0 + 1, animal.position.1),
-                direction: East,
-            }),
-            _ => None
-        }
-    }
-}
-
 fn walk(animal: &Animal, maze: &Vec<Vec<char>>) -> Option<Animal> {
     let c = maze[animal.position.1][animal.position.0];
     match c {
-        '|' => VerticalPipe::walk(animal),
-        '-' => HorizontalPipe::walk(animal),
-        'L' => L::walk(animal),
-        'J' => J::walk(animal),
-        '7' => Seven::walk(animal),
-        'F' => F::walk(animal),
-        '.' => Dot::walk(animal),
+        '|' => walk_from_vertical_pipe(animal),
+        '-' => walk_from_horizontal_pipe(animal),
+        'L' => walk_from_l(animal),
+        'J' => walk_from_j(animal),
+        '7' => walk_from_7(animal),
+        'F' => walk_from_f(animal),
+        '.' => walk_from_dot(animal),
         _ => panic!("unknown tile")
+    }
+}
+
+fn walk_from_start(animal: &Animal) -> Option<Animal> {
+    let animal = match animal.direction {
+        North => Animal {
+            position: Position(animal.position.0, animal.position.1 - 1),
+            direction: North,
+        },
+        South => Animal {
+            position: Position(animal.position.0, animal.position.1 + 1),
+            direction: South,
+        },
+        East => Animal {
+            position: Position(animal.position.0 + 1, animal.position.1),
+            direction: East,
+        },
+        West => Animal {
+            position: Position(animal.position.0 - 1, animal.position.1),
+            direction: West,
+        }
+    };
+
+    Some(animal)
+}
+
+fn walk_from_dot(_animal: &Animal) -> Option<Animal> {
+    None
+}
+
+fn walk_from_l(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        South => Some(Animal {
+            position: Position(animal.position.0 + 1, animal.position.1),
+            direction: East,
+        }),
+        West => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 - 1),
+            direction: North,
+        }),
+        _ => None
+    }
+}
+
+fn walk_from_j(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        South => Some(Animal {
+            position: Position(animal.position.0 - 1, animal.position.1),
+            direction: West,
+        }),
+        East => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 - 1),
+            direction: North,
+        }),
+        _ => None
+    }
+}
+
+fn walk_from_7(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        North => Some(Animal {
+            position: Position(animal.position.0 - 1, animal.position.1),
+            direction: West,
+        }),
+        East => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 + 1),
+            direction: South,
+        }),
+        _ => None
+    }
+}
+
+fn walk_from_f(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        North => Some(Animal {
+            position: Position(animal.position.0 + 1, animal.position.1),
+            direction: East,
+        }),
+        West => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 + 1),
+            direction: South,
+        }),
+        _ => None
+    }
+}
+
+fn walk_from_vertical_pipe(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        North => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 - 1),
+            direction: North,
+        }),
+        South => Some(Animal {
+            position: Position(animal.position.0, animal.position.1 + 1),
+            direction: South,
+        }),
+        _ => None
+    }
+}
+
+fn walk_from_horizontal_pipe(animal: &Animal) -> Option<Animal> {
+    match animal.direction {
+        West => Some(Animal {
+            position: Position(animal.position.0 - 1, animal.position.1),
+            direction: West,
+        }),
+        East => Some(Animal {
+            position: Position(animal.position.0 + 1, animal.position.1),
+            direction: East,
+        }),
+        _ => None
     }
 }
 
@@ -208,7 +172,7 @@ fn start_walking(maze: &Vec<Vec<char>>, starting_position: Position) -> Animal {
     [North, South, East, West]
         .iter()
         .map(|&direction| Animal { position: starting_position, direction })
-        .filter_map(|animal| Start::walk(&animal))
+        .filter_map(|animal| walk_from_start(&animal))
         .find_or_first(|animal| walk(&animal, &maze) != None)
         .unwrap()
 }
