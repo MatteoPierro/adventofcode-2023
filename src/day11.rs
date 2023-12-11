@@ -24,67 +24,59 @@ impl Galaxy {
 }
 
 fn calculate_sum_distances(galaxies: Vec<Galaxy>) -> usize {
-    let distances: Vec<_> = galaxies.into_iter().combinations(2).map(|combination| {
-        let first = combination.first().unwrap();
-        let second = combination.last().unwrap();
-        first.distance(second)
-    }).collect();
-
-    distances.iter().sum::<usize>()
+    galaxies.into_iter().combinations(2)
+        .map(|combination| {
+            let first = combination.first().unwrap();
+            let second = combination.last().unwrap();
+            first.distance(second)
+        }).sum()
 }
 
 fn expand_galaxy(input: &str, expansion_factor: usize) -> Vec<Galaxy> {
-    let mut galaxies = parse_galaxy(input);
+    let mut galaxies = parse_galaxies(input);
 
-    galaxies.sort_by(|g1, g2| g1.y.cmp(&g2.y));
+    expand_galaxy_along_one_dimension(
+        &mut galaxies,
+        expansion_factor,
+        |galaxy: &Galaxy| galaxy.y,
+        |g: &mut Galaxy, expansion: usize| g.expand_row(expansion),
+    );
 
-    let mut index: usize = 0;
-    let number_of_galaxies = galaxies.iter().count();
-    while index < number_of_galaxies - 1 {
-        let g1 = galaxies.get(index).unwrap();
-        let g2 = galaxies.get(index + 1).unwrap();
-        let mut expansion = g2.y - g1.y;
-        if expansion <= 1 {
-            index += 1;
-            continue;
-        }
+    expand_galaxy_along_one_dimension(
+        &mut galaxies,
+        expansion_factor,
+        |galaxy: &Galaxy| galaxy.x,
+        |g: &mut Galaxy, expansion: usize| g.expand_column(expansion),
+    );
 
-        expansion = (expansion - 1) * (expansion_factor - 1);
-
-        for j in index + 1..number_of_galaxies {
-            galaxies.get_mut(j).unwrap().expand_row(expansion);
-        }
-
-        index += 1;
-    }
-
-    galaxies.sort_by(|g1, g2| g1.x.cmp(&g2.x));
-
-    let mut index: usize = 0;
-    let number_of_galaxies = galaxies.iter().count();
-    while index < number_of_galaxies - 1 {
-        let g1 = galaxies.get(index).unwrap();
-        let g2 = galaxies.get(index + 1).unwrap();
-
-        let mut expansion = g2.x - g1.x;
-        if expansion <= 1 {
-            index += 1;
-            continue;
-        }
-
-        expansion = (expansion - 1) * (expansion_factor - 1);
-        for j in index + 1..number_of_galaxies {
-            galaxies.get_mut(j).unwrap().expand_column(expansion);
-        }
-
-        index += 1;
-    }
-
-    galaxies.sort_by(|g1, g2| g1.index.cmp(&g2.index));
     galaxies
 }
 
-fn parse_galaxy(input: &str) -> Vec<Galaxy> {
+fn expand_galaxy_along_one_dimension(galaxies: &mut Vec<Galaxy>,
+                                     expansion_factor: usize,
+                                     dimension: fn(&Galaxy) -> usize,
+                                     galaxy_expander: fn(&mut Galaxy, usize)) {
+    galaxies.sort_by(|g1: &Galaxy, g2: &Galaxy| dimension(g1).cmp(&dimension(g2)));
+
+    let number_of_galaxies = galaxies.iter().count();
+    for galaxy_index in 0..number_of_galaxies - 1 {
+        let g1 = galaxies.get(galaxy_index).unwrap();
+        let g2 = galaxies.get(galaxy_index + 1).unwrap();
+
+        let galaxy_distance = dimension(g2) - dimension(g1);
+        if galaxy_distance <= 1 {
+            continue;
+        }
+
+        let expansion = (galaxy_distance - 1) * (expansion_factor - 1);
+
+        for remaining_galaxy_index in galaxy_index + 1..number_of_galaxies {
+            galaxy_expander(galaxies.get_mut(remaining_galaxy_index).unwrap(), expansion)
+        }
+    }
+}
+
+fn parse_galaxies(input: &str) -> Vec<Galaxy> {
     let rows = read_lines(input);
     let mut galaxy_index: usize = 1;
     let mut galaxies: Vec<Galaxy> = vec![];
