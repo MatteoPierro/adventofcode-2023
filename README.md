@@ -18,3 +18,4 @@ cargo test dayXY::tests
 - [Day 8: Haunted Wasteland](./src/day8.rs)
 - [Day 9: Mirage Maintenance](./src/day9.rs)
 - [Day 10: Pipe Maze](./src/day10.rs)
+- [Day 11: Cosmic Expansion](./src/day11.rs)
