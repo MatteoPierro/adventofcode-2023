@@ -32,17 +32,17 @@ fn calculate_sum_distances(galaxies: Vec<Galaxy>) -> usize {
         }).sum()
 }
 
-fn expand_galaxy(input: &str, expansion_factor: usize) -> Vec<Galaxy> {
+fn expand_galaxies(input: &str, expansion_factor: usize) -> Vec<Galaxy> {
     let mut galaxies = parse_galaxies(input);
 
-    expand_galaxy_along_one_dimension(
+    expand_galaxies_along_one_dimension(
         &mut galaxies,
         expansion_factor,
         |galaxy: &Galaxy| galaxy.y,
         |g: &mut Galaxy, expansion: usize| g.expand_row(expansion),
     );
 
-    expand_galaxy_along_one_dimension(
+    expand_galaxies_along_one_dimension(
         &mut galaxies,
         expansion_factor,
         |galaxy: &Galaxy| galaxy.x,
@@ -52,10 +52,10 @@ fn expand_galaxy(input: &str, expansion_factor: usize) -> Vec<Galaxy> {
     galaxies
 }
 
-fn expand_galaxy_along_one_dimension(galaxies: &mut Vec<Galaxy>,
-                                     expansion_factor: usize,
-                                     dimension: fn(&Galaxy) -> usize,
-                                     galaxy_expander: fn(&mut Galaxy, usize)) {
+fn expand_galaxies_along_one_dimension(galaxies: &mut Vec<Galaxy>,
+                                       expansion_factor: usize,
+                                       dimension: fn(&Galaxy) -> usize,
+                                       galaxy_expander: fn(&mut Galaxy, usize)) {
     galaxies.sort_by(|g1: &Galaxy, g2: &Galaxy| dimension(g1).cmp(&dimension(g2)));
 
     let number_of_galaxies = galaxies.iter().count();
@@ -99,11 +99,11 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_part() {
+    fn it_solves_puzzle() {
         let input = read_input_file("input_day11.txt");
 
-        assert_eq!(9648398, calculate_sum_distances(expand_galaxy(&input, 2)));
-        assert_eq!(618800410814, calculate_sum_distances(expand_galaxy(&input, 1000000)));
+        assert_eq!(9648398, calculate_sum_distances(expand_galaxies(&input, 2)));
+        assert_eq!(618800410814, calculate_sum_distances(expand_galaxies(&input, 1000000)));
     }
 
     #[test]
@@ -120,8 +120,8 @@ mod tests {
         .......#..
         #...#....."};
 
-        assert_eq!(374, calculate_sum_distances(expand_galaxy(input, 2)));
-        assert_eq!(1030, calculate_sum_distances(expand_galaxy(input, 10)));
-        assert_eq!(8410, calculate_sum_distances(expand_galaxy(input, 100)));
+        assert_eq!(374, calculate_sum_distances(expand_galaxies(input, 2)));
+        assert_eq!(1030, calculate_sum_distances(expand_galaxies(input, 10)));
+        assert_eq!(8410, calculate_sum_distances(expand_galaxies(input, 100)));
     }
 }
