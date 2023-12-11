@@ -33,20 +33,8 @@ fn calculate_sum_distances(galaxies: Vec<Galaxy>) -> usize {
     distances.iter().sum::<usize>()
 }
 
-fn expand_galaxy(input: &str) -> Vec<Galaxy> {
-    let rows = read_lines(input);
-    let mut galaxy_index: usize = 1;
-    let mut galaxies: Vec<Galaxy> = vec![];
-    for (y, row) in rows.iter().enumerate() {
-        for (x, c) in row.chars().enumerate() {
-            if c == '#' {
-                galaxies.push(Galaxy { index: galaxy_index, x, y });
-                galaxy_index += 1;
-            }
-        }
-    }
-
-    // println!("Initial {:?}", galaxies);
+fn expand_galaxy(input: &str, expansion_factor: usize) -> Vec<Galaxy> {
+    let mut galaxies = parse_galaxy(input);
 
     galaxies.sort_by(|g1, g2| g1.y.cmp(&g2.y));
 
@@ -61,7 +49,7 @@ fn expand_galaxy(input: &str) -> Vec<Galaxy> {
             continue;
         }
 
-        expansion -= 1;
+        expansion = (expansion - 1) * (expansion_factor - 1);
 
         for j in index + 1..number_of_galaxies {
             galaxies.get_mut(j).unwrap().expand_row(expansion);
@@ -69,8 +57,6 @@ fn expand_galaxy(input: &str) -> Vec<Galaxy> {
 
         index += 1;
     }
-
-    // println!("After row {:?}", galaxies);
 
     galaxies.sort_by(|g1, g2| g1.x.cmp(&g2.x));
 
@@ -86,7 +72,7 @@ fn expand_galaxy(input: &str) -> Vec<Galaxy> {
             continue;
         }
 
-        expansion -= 1;
+        expansion = (expansion - 1) * (expansion_factor - 1);
         for j in index + 1..number_of_galaxies {
             galaxies.get_mut(j).unwrap().expand_column(expansion);
         }
@@ -95,7 +81,21 @@ fn expand_galaxy(input: &str) -> Vec<Galaxy> {
     }
 
     galaxies.sort_by(|g1, g2| g1.index.cmp(&g2.index));
-    // println!("After column {:?}", galaxies);
+    galaxies
+}
+
+fn parse_galaxy(input: &str) -> Vec<Galaxy> {
+    let rows = read_lines(input);
+    let mut galaxy_index: usize = 1;
+    let mut galaxies: Vec<Galaxy> = vec![];
+    for (y, row) in rows.iter().enumerate() {
+        for (x, c) in row.chars().enumerate() {
+            if c == '#' {
+                galaxies.push(Galaxy { index: galaxy_index, x, y });
+                galaxy_index += 1;
+            }
+        }
+    }
     galaxies
 }
 
@@ -110,7 +110,8 @@ mod tests {
     fn it_solves_first_part() {
         let input = read_input_file("input_day11.txt");
 
-        assert_eq!(9648398, calculate_sum_distances(expand_galaxy(&input)));
+        assert_eq!(9648398, calculate_sum_distances(expand_galaxy(&input, 2)));
+        assert_eq!(618800410814, calculate_sum_distances(expand_galaxy(&input, 1000000)));
     }
 
     #[test]
@@ -127,21 +128,8 @@ mod tests {
         .......#..
         #...#....."};
 
-        let galaxies = expand_galaxy(input);
-
-        assert_eq!(
-            vec![Galaxy { index: 1, x: 4, y: 0 },
-                 Galaxy { index: 2, x: 9, y: 1 },
-                 Galaxy { index: 3, x: 0, y: 2 },
-                 Galaxy { index: 4, x: 8, y: 5 },
-                 Galaxy { index: 5, x: 1, y: 6 },
-                 Galaxy { index: 6, x: 12, y: 7 },
-                 Galaxy { index: 7, x: 9, y: 10 },
-                 Galaxy { index: 8, x: 0, y: 11 },
-                 Galaxy { index: 9, x: 5, y: 11 }],
-            galaxies
-        );
-
-        assert_eq!(374, calculate_sum_distances(galaxies));
+        assert_eq!(374, calculate_sum_distances(expand_galaxy(input, 2)));
+        assert_eq!(1030, calculate_sum_distances(expand_galaxy(input, 10)));
+        assert_eq!(8410, calculate_sum_distances(expand_galaxy(input, 100)));
     }
 }
