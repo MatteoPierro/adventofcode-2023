@@ -19,3 +19,4 @@ cargo test dayXY::tests
 - [Day 9: Mirage Maintenance](./src/day9.rs)
 - [Day 10: Pipe Maze](./src/day10.rs)
 - [Day 11: Cosmic Expansion](./src/day11.rs)
+- [Day 12: Hot Springs](./src/day12.rs)
