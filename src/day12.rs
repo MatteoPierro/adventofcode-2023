@@ -17,14 +17,10 @@ fn numbers_of_valid_springs(input: &str, expand: bool) -> Vec<usize> {
                     .cloned().
                     collect();
             }
-            number_of_valid_springs(&spring, &size_continuous_damaged_groups)
+            let spring1 = spring.chars().collect::<LinkedList<_>>();
+            let groups_size = size_continuous_damaged_groups.iter().map(|i| *i).collect::<LinkedList<usize>>();
+            calculate_number_of_valid_springs(spring1, groups_size, 0)
         }).collect()
-}
-
-fn number_of_valid_springs(s: &str, size_continuous_damaged_groups: &Vec<usize>) -> usize {
-    let spring = s.chars().collect::<LinkedList<_>>();
-    let groups_size = size_continuous_damaged_groups.iter().map(|i| *i).collect::<LinkedList<usize>>();
-    return calculate_number_of_valid_springs(spring, groups_size, 0);
 }
 
 #[memoize]
@@ -70,7 +66,7 @@ fn calculate_number_of_valid_springs(spring: LinkedList<char>, groups_size: Link
             calculate_number_of_valid_springs(spring, groups_size, 0)
         }
 
-        _ => { // it it's a ?
+        _ => { // if it's a ?
             if groups_size.is_empty() { // we can continue checking if we find damaged springs or not
                 return calculate_number_of_valid_springs(spring, groups_size, 0);
             }
@@ -121,20 +117,5 @@ mod tests {
         assert_eq!(vec![1, 16384, 1, 16, 2500, 506250], numbers_of_valid_springs(input, true));
         assert_eq!(21, numbers_of_valid_springs(input, false).iter().sum::<usize>());
         assert_eq!(525152, numbers_of_valid_springs(input, true).iter().sum::<usize>());
-    }
-
-    #[test]
-    fn it_calculates_number_of_damaged_springs() {
-        assert_eq!(1, calculate_number_of_valid_springs("???.###".chars().collect::<LinkedList<_>>(), vec![1, 1, 3].iter().map(|i| *i).collect::<LinkedList<usize>>(), 0));
-    }
-
-    #[test]
-    fn it_calculates_the_number_of_valid_springs() {
-        assert_eq!(1, number_of_valid_springs("???.###", &vec![1, 1, 3]));
-        assert_eq!(4, number_of_valid_springs(".??..??...?##.", &vec![1, 1, 3]));
-        assert_eq!(1, number_of_valid_springs("?#?#?#?#?#?#?#?", &vec![1, 3, 1, 6]));
-        assert_eq!(1, number_of_valid_springs("????.#...#...", &vec![4, 1, 1]));
-        assert_eq!(4, number_of_valid_springs("????.######..#####.", &vec![1, 6, 5]));
-        assert_eq!(10, number_of_valid_springs("?###????????", &vec![3, 2, 1]));
     }
 }
