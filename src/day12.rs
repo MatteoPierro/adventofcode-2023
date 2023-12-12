@@ -71,18 +71,18 @@ fn calculate_number_of_valid_springs(spring: LinkedList<char>, groups_size: Link
                 return calculate_number_of_valid_springs(spring, groups_size, 0);
             }
 
-            if *groups_size.front().unwrap() == damages_springs_counter { // we found a valid group of damaged springs let's move on
+            if *groups_size.front().unwrap() == damages_springs_counter { // we found a valid group of damaged springs let's move on. let's suppose that ? is a  '.'.
                 let mut groups_size = groups_size;
                 groups_size.pop_front();
                 return calculate_number_of_valid_springs(spring, groups_size, 0);
             }
 
-            if damages_springs_counter > 0 { // we are still counting a spring group. let's suppose that ? is a #.
+            if damages_springs_counter > 0 { // we are still counting a spring group. let's suppose that ? is a '#'.
                 return calculate_number_of_valid_springs(spring, groups_size, damages_springs_counter + 1);
             }
 
-            calculate_number_of_valid_springs(spring.clone(), groups_size.clone(), damages_springs_counter + 1)
-                + calculate_number_of_valid_springs(spring.clone(), groups_size.clone(), damages_springs_counter)
+            calculate_number_of_valid_springs(spring.clone(), groups_size.clone(), 1)  // let's consider that ? is a '#'.
+                + calculate_number_of_valid_springs(spring.clone(), groups_size.clone(), 0) // let's consider that ? is a '.'.
         }
     }
 }
