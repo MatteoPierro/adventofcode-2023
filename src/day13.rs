@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use itertools::Itertools;
 use num::range;
 
@@ -24,14 +26,9 @@ fn finds_reflection_column(note: &Vec<String>, maximum_smudge: usize) -> Option<
 }
 
 fn finds_reflection_row(note: &Vec<String>, maximum_smudge: usize) -> Option<usize> {
-    let candidates = finds_candidate_reflections(note);
-    for candidate in candidates {
-        if let Some(winning_candidate) = try_candidate(candidate, note, maximum_smudge) {
-            return Some(winning_candidate);
-        }
-    }
-
-    None
+    finds_candidate_reflections(note).iter()
+        .flat_map(|&candidate| try_candidate(candidate, note, maximum_smudge))
+        .next()
 }
 
 fn try_candidate(candidate: usize, note: &Vec<String>, maximum_smudge: usize) -> Option<usize> {
@@ -54,15 +51,9 @@ fn try_candidate(candidate: usize, note: &Vec<String>, maximum_smudge: usize) ->
 }
 
 fn finds_candidate_reflections(note: &Vec<String>) -> Vec<usize> {
-    let mut candidates = vec![];
-
-    for (prev, next) in (0..note.len()).zip(1..note.len()) {
-        if smudge(&note[prev], &note[next]) <= 1 {
-            candidates.push(prev);
-        }
-    }
-
-    candidates
+    (0..note.len() - 1)
+        .filter(|&prev| smudge(&note[prev], &note[prev + 1]) <= 1)
+        .collect()
 }
 
 fn flip_note(note: &Vec<String>) -> Vec<String> {
@@ -87,11 +78,13 @@ fn parse_notes(input: &str) -> Vec<Vec<String>> {
 
 fn smudge(s1: &str, s2: &str) -> usize {
     let mut diff: usize = 0;
-    for (index, c1) in s1.chars().enumerate() {
-        if s2.chars().nth(index).unwrap() != c1 {
+
+    for (c1, c2) in zip(s1.chars(), s2.chars()) {
+        if c1 != c2 {
             diff += 1;
         }
     }
+
     diff
 }
 
@@ -103,7 +96,7 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_part() {
+    fn it_solves_puzzle() {
         let input = &read_input_file("input_day13.txt");
 
         assert_eq!(30802, summarize_notes(&parse_notes(input), 0));
