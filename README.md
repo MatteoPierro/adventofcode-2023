@@ -20,3 +20,4 @@ cargo test dayXY::tests
 - [Day 10: Pipe Maze](./src/day10.rs)
 - [Day 11: Cosmic Expansion](./src/day11.rs)
 - [Day 12: Hot Springs](./src/day12.rs)
+- [Day 13: Point of Incidence](./src/day13.rs)
