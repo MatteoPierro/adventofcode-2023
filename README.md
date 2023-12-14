@@ -21,3 +21,4 @@ cargo test dayXY::tests
 - [Day 11: Cosmic Expansion](./src/day11.rs)
 - [Day 12: Hot Springs](./src/day12.rs)
 - [Day 13: Point of Incidence](./src/day13.rs)
+- [Day 14: Parabolic Reflector Dish](./src/day14.rs)
