@@ -23,3 +23,4 @@ cargo test dayXY::tests
 - [Day 13: Point of Incidence](./src/day13.rs)
 - [Day 14: Parabolic Reflector Dish](./src/day14.rs)
 - [Day 15: Lens Library](./src/day15.rs)
+- [Day 16: The Floor Will Be Lava](./src/day16.rs)
