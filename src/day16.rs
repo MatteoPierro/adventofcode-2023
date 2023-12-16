@@ -1,5 +1,7 @@
 use std::collections::{HashSet, LinkedList};
 
+use num::range;
+
 use crate::day16::Direction::*;
 use crate::input_reader::read_lines;
 
@@ -115,9 +117,39 @@ impl Contraption {
     }
 
     fn count_energized_tiles(&self) -> usize {
+        self.count_energized_tiles_from(Bean { tile: self.tile_at(&0, &0).unwrap(), x: 0, y: 0, direction: Right })
+    }
+
+    fn maximize_energized_tiles(&self) -> usize {
+        let mut energies: Vec<usize> = vec![];
+
+        for y in range(0, self.length) {
+            energies.push(
+                self.count_energized_tiles_from(Bean { x: 0, y, direction: Right, tile: self.tile_at(&0, &y).unwrap() })
+            );
+
+            energies.push(
+                self.count_energized_tiles_from(Bean { x: self.width - 1, y, direction: Left, tile: self.tile_at(&(self.width - 1), &y).unwrap() })
+            );
+        }
+
+        for x in range(0, self.width) {
+            energies.push(
+                self.count_energized_tiles_from(Bean { x, y: 0, direction: Down, tile: self.tile_at(&x, &0).unwrap() })
+            );
+
+            energies.push(
+                self.count_energized_tiles_from(Bean { x, y: self.width - 1, direction: Up, tile: self.tile_at(&x, &(self.width - 1)).unwrap() })
+            );
+        }
+
+        energies.iter().max().unwrap().clone()
+    }
+
+    fn count_energized_tiles_from(&self, bean: Bean) -> usize {
         let mut visited_beams: HashSet<Bean> = HashSet::new();
         let mut bean_to_visit: LinkedList<Bean> = LinkedList::new();
-        bean_to_visit.push_back(Bean { tile: self.tile_at(&0, &0).unwrap(), x: 0, y: 0, direction: Right });
+        bean_to_visit.push_back(bean);
 
         while let Some(bean) = bean_to_visit.pop_front() {
             if visited_beams.contains(&bean) {
@@ -144,10 +176,17 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_puzzle() {
+    fn it_solves_first_part() {
         let input = &read_input_file("input_day16.txt");
 
         assert_eq!(8021, Contraption::new(input).count_energized_tiles());
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = &read_input_file("input_day16.txt");
+
+        assert_eq!(8216, Contraption::new(input).maximize_energized_tiles());
     }
 
     #[test]
@@ -165,5 +204,22 @@ mod tests {
         ..//.|...."};
 
         assert_eq!(46, Contraption::new(input).count_energized_tiles());
+    }
+
+    #[test]
+    fn it_maximizes_energized_tiles() {
+        let input = indoc! {"
+        .|...\\....
+        |.-.\\.....
+        .....|-...
+        ........|.
+        ..........
+        .........\\
+        ..../.\\\\..
+        .-.-/..|..
+        .|....-|.\\
+        ..//.|...."};
+
+        assert_eq!(51, Contraption::new(input).maximize_energized_tiles());
     }
 }
