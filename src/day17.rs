@@ -39,12 +39,17 @@ struct CityMap {
 }
 
 impl CityMap {
-    fn initial_heat_losses(&self) -> HashMap<(usize, usize), usize> {
+    fn initial_heat_losses(&self) -> HashMap<(usize, usize, Direction, usize), usize> {
         let mut distances = HashMap::new();
 
         for y in 0 ..self.city_blocks.len() {
             for x in 0..self.city_blocks[y].len() {
-                distances.insert((x, y),usize::MAX);
+                for steps in 1..=3 {
+                    distances.insert((x, y, Up, steps), usize::MAX);
+                    distances.insert((x, y, Down, steps), usize::MAX);
+                    distances.insert((x, y, Left, steps), usize::MAX);
+                    distances.insert((x, y, Right, steps), usize::MAX);
+                }
             }
         }
 
@@ -220,25 +225,26 @@ fn minimize_heat_loss(map: &CityMap) -> usize {
 
     let mut heap: BinaryHeap<State> = BinaryHeap::new();
 
-    *heat_losses.get_mut(&(0, 0)).unwrap() = 0;
-    heap.push(State { heat_lost: 0, position: (0, 0), steps: 0, direction: Right});
-    heap.push(State { heat_lost: 0, position: (0, 0), steps: 0, direction: Down});
+    // *heat_losses.get_mut(&(0, 0, Right, 0)).unwrap() = 0;
+    // *heat_losses.get_mut(&(0, 0, Right, 0)).unwrap() = 0;
+    heap.push(State { heat_lost: map.heat_at(1, 0), position: (1, 0), steps: 1, direction: Right});
+    heap.push(State { heat_lost: map.heat_at(0, 1), position: (0, 1), steps: 1, direction: Down});
 
     while let Some(state) = heap.pop() {
         if state.position == target {
-            break
+            return state.heat_lost
         }
 
-        if state.heat_lost > heat_losses[&state.position] { // investigate here if we don't find the solution
+        if state.heat_lost > heat_losses[&(state.position.0, state.position.1, state.direction, state.steps)] { // investigate here if we don't find the solution
             continue
         }
 
         for next_state in map.neighbours(&state) {
-            if next_state.heat_lost >= heat_losses[&next_state.position] { // investigate here if we don't find the solution
+            if next_state.heat_lost >= heat_losses[&(next_state.position.0, next_state.position.1, next_state.direction, next_state.steps)] { // investigate here if we don't find the solution
                 continue
             }
 
-            *heat_losses.get_mut(&next_state.position).unwrap() = next_state.heat_lost;
+            *heat_losses.get_mut(&(next_state.position.0, next_state.position.1, next_state.direction, next_state.steps)).unwrap() = next_state.heat_lost;
             *pred.get_mut(&next_state.position).unwrap() = Some(state.position);
             heap.push(next_state);
         }
@@ -247,14 +253,15 @@ fn minimize_heat_loss(map: &CityMap) -> usize {
     // println!("{:?}", heat_losses.get(&target));
     //
     // println!("{:?}", pred.get(&target).unwrap().unwrap());
-    let mut p = target;
+    // let mut p = target;
+    //
+    // while let Some(x) = pred.get(&p).unwrap() {
+    //     println!("{:?}", x);
+    //     p = *x;
+    // }
 
-    while let Some(x) = pred.get(&p).unwrap() {
-        println!("{:?}", x);
-        p = *x;
-    }
-
-    *heat_losses.get(&target).unwrap()
+    // *heat_losses.get(&target).unwrap()
+    panic!("NOT FOUND!")
 }
 
 
@@ -262,11 +269,17 @@ fn minimize_heat_loss(map: &CityMap) -> usize {
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
-    use crate::day17::{CityMap, minimize_heat_loss};
-    use crate::input_reader::read_lines;
+    use crate::day17::*;
+    use crate::input_reader::{read_input_file, read_lines};
 
     #[test]
-    fn it_does_something() {
+    fn it_solves_first_part() {
+        let input = &read_input_file("input_day17.txt");
+
+        assert_eq!(1138, minimize_heat_loss_from_input(input))
+    }
+    #[test]
+    fn it_minimizes_heat_loss() {
         let input = indoc! {"
         2413432311323
         3215453535623
@@ -282,6 +295,10 @@ mod tests {
         2546548887735
         4322674655533"};
 
+        assert_eq!(102, minimize_heat_loss_from_input(input))
+    }
+
+    fn minimize_heat_loss_from_input(input: &str) -> usize {
         let mut city_blocks: Vec<Vec<usize>> = vec![];
         for row in read_lines(input) {
             let mut parsed_row: Vec<usize> = vec![];
@@ -293,6 +310,6 @@ mod tests {
 
         // println!("{:?}", city_blocks);
         let map = CityMap { city_blocks: city_blocks.clone(), length: city_blocks.len(), width: city_blocks[0].len() };
-        assert_eq!(102, minimize_heat_loss(&map))
+        minimize_heat_loss(&map)
     }
 }
