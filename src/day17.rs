@@ -44,7 +44,7 @@ impl CityMap {
     fn build(input: &str) -> Self {
         Self::new(
             input,
-            neighbours,
+            |map, current_state| find_neighbours(map, current_state, 0, 3),
             |target, current| target == current.position,
         )
     }
@@ -52,8 +52,8 @@ impl CityMap {
     fn build_for_crucibles(input: &str) -> Self {
         Self::new(
             input,
-            neighbour_crucibles,
-            |target, current| target == current.position && current.steps >= 4
+            |map, current_state| find_neighbours(map, current_state, 4, 10),
+            |target, current| target == current.position && current.steps >= 4,
         )
     }
 
@@ -95,18 +95,6 @@ impl CityMap {
         distances
     }
 
-    fn initial_pred(&self) -> HashMap<(usize, usize), Option<(usize, usize)>> {
-        let mut pred = HashMap::new();
-
-        for y in 0..self.city_blocks.len() {
-            for x in 0..self.city_blocks[y].len() {
-                pred.insert((x, y), None);
-            }
-        }
-
-        pred
-    }
-
     fn target(&self) -> (usize, usize) {
         (self.width - 1, self.length - 1)
     }
@@ -118,7 +106,6 @@ impl CityMap {
     fn minimize_heat_loss(&self) -> usize {
         let target = self.target();
         let mut heat_losses = self.initial_heat_losses();
-        let mut pred = self.initial_pred();
 
         let mut heap: BinaryHeap<State> = BinaryHeap::new();
 
@@ -140,7 +127,6 @@ impl CityMap {
                 }
 
                 *heat_losses.get_mut(&(next_state.position.0, next_state.position.1, next_state.direction, next_state.steps)).unwrap() = next_state.heat_lost;
-                *pred.get_mut(&next_state.position).unwrap() = Some(state.position);
                 heap.push(next_state);
             }
         }
@@ -149,157 +135,14 @@ impl CityMap {
     }
 }
 
-fn neighbours(map: &CityMap, current_state: &State) -> Vec<State> {
-    match current_state.direction {
-        Up => neighbours_up(map, current_state),
-        Down => neighbours_down(map, current_state),
-        Left => neighbours_left(map, current_state),
-        Right => neighbours_right(map, current_state)
-    }
-}
-
-fn neighbours_up(map: &CityMap, current_state: &State) -> Vec<State> {
-    let mut next_state = vec![];
-
-    if current_state.position.1 > 0 && current_state.steps < 3 {
-        next_state.push(State {
-            direction: Up,
-            position: (current_state.position.0, current_state.position.1 - 1),
-            steps: current_state.steps + 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 - 1),
-        })
-    }
-
-    if current_state.position.0 > 0 {
-        next_state.push(State {
-            direction: Left,
-            position: (current_state.position.0 - 1, current_state.position.1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 - 1, current_state.position.1),
-        })
-    }
-
-    if current_state.position.0 < map.width - 1 {
-        next_state.push(State {
-            direction: Right,
-            position: (current_state.position.0 + 1, current_state.position.1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 + 1, current_state.position.1),
-        })
-    }
-
-    next_state
-}
-
-fn neighbours_down(map: &CityMap, current_state: &State) -> Vec<State> {
-    let mut next_state = vec![];
-
-    if current_state.position.1 < map.length - 1 && current_state.steps < 3 {
-        next_state.push(State {
-            direction: Down,
-            position: (current_state.position.0, current_state.position.1 + 1),
-            steps: current_state.steps + 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 + 1),
-        })
-    }
-
-    if current_state.position.0 > 0 {
-        next_state.push(State {
-            direction: Left,
-            position: (current_state.position.0 - 1, current_state.position.1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 - 1, current_state.position.1),
-        })
-    }
-
-    if current_state.position.0 < map.width - 1 {
-        next_state.push(State {
-            direction: Right,
-            position: (current_state.position.0 + 1, current_state.position.1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 + 1, current_state.position.1),
-        })
-    }
-
-    next_state
-}
-
-fn neighbours_right(map: &CityMap, current_state: &State) -> Vec<State> {
-    let mut next_state = vec![];
-
-    if current_state.position.0 < map.width - 1 && current_state.steps < 3 {
-        next_state.push(State {
-            direction: Right,
-            position: (current_state.position.0 + 1, current_state.position.1),
-            steps: current_state.steps + 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 + 1, current_state.position.1),
-        })
-    }
-
-    if current_state.position.1 < map.length - 1 {
-        next_state.push(State {
-            direction: Down,
-            position: (current_state.position.0, current_state.position.1 + 1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 + 1),
-        })
-    }
-
-    if current_state.position.1 > 0 {
-        next_state.push(State {
-            direction: Up,
-            position: (current_state.position.0, current_state.position.1 - 1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 - 1),
-        })
-    }
-
-    next_state
-}
-
-fn neighbours_left(map: &CityMap, current_state: &State) -> Vec<State> {
-    let mut next_state = vec![];
-
-    if current_state.position.0 > 0 && current_state.steps < 3 {
-        next_state.push(State {
-            direction: Left,
-            position: (current_state.position.0 - 1, current_state.position.1),
-            steps: current_state.steps + 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0 - 1, current_state.position.1),
-        })
-    }
-
-    if current_state.position.1 < map.length - 1 {
-        next_state.push(State {
-            direction: Down,
-            position: (current_state.position.0, current_state.position.1 + 1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 + 1),
-        })
-    }
-
-    if current_state.position.1 > 0 {
-        next_state.push(State {
-            direction: Up,
-            position: (current_state.position.0, current_state.position.1 - 1),
-            steps: 1,
-            heat_lost: current_state.heat_lost + map.heat_at(current_state.position.0, current_state.position.1 - 1),
-        })
-    }
-
-    next_state
-}
-
-fn neighbour_crucibles(map: &CityMap, current_state: &State) -> Vec<State> {
-    let directions: Vec<Direction> = if current_state.steps < 4 {
-        vec![current_state.direction]
-    } else {
-        vec![Right, Left, Up, Down]
-    };
-
+fn find_neighbours(map: &CityMap, current_state: &State, min_consecutive_steps: usize, max_consecutive_steps: usize) -> Vec<State> {
     let mut possible_neighbours = vec![];
 
-    for direction in directions {
+    for direction in [Right, Left, Up, Down] {
+        if current_state.direction != direction && current_state.steps < min_consecutive_steps {
+            continue;
+        }
+
         if current_state.direction == Up && direction == Down {
             continue;
         }
@@ -316,7 +159,7 @@ fn neighbour_crucibles(map: &CityMap, current_state: &State) -> Vec<State> {
             continue;
         }
 
-        if current_state.steps == 10 && direction == current_state.direction {
+        if current_state.steps == max_consecutive_steps && direction == current_state.direction {
             continue;
         }
 
