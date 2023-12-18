@@ -2,8 +2,7 @@ use std::ops::Div;
 
 use crate::input_reader::read_lines;
 
-fn calculate_cubic_meters_of_lava(input: &str) -> isize {
-    let mut digger = Digger::new();
+fn calculate_cubic_meters_of_lava(input: &str, digger: &mut Digger) -> isize {
     digger.find_tranches(input);
     digger.perimeter + number_of_internal_tranches(&digger.polygon, digger.perimeter)
 }
@@ -33,16 +32,6 @@ fn calculate_area(polygon: &Vec<Position>) -> isize {
 #[derive(Debug, Hash, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct Position(isize, isize);
 
-fn parse_instruction(raw_instruction: String) -> (String, isize) {
-    let line_parts = raw_instruction.split(" (").collect::<Vec<_>>();
-    let dig_instruction = line_parts[0];
-    let color = line_parts[1].split(")").collect::<Vec<_>>()[0];
-    let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
-    let direction = instruction_parts[0];
-    let steps = instruction_parts[1].parse::<isize>().unwrap();
-    (direction.to_string(), steps)
-}
-
 struct Digger {
     current_position: Position,
     perimeter: isize,
@@ -55,13 +44,23 @@ impl Digger {
         Digger {
             current_position: Position(0, 0),
             perimeter: 0,
-            polygon: vec![Position(1, 0)],
+            polygon: vec![Position(0, 0)],
             instruction_parser: parse_instruction
         }
     }
+
+    fn build_with_color_instruction() -> Self {
+        Digger {
+            current_position: Position(0, 0),
+            perimeter: 0,
+            polygon: vec![Position(0, 0)],
+            instruction_parser: parse_instruction_color
+        }
+    }
+
     fn find_tranches(&mut self, input: &str) {
         for line in read_lines(input) {
-            let(direction, steps) = parse_instruction(line);
+            let(direction, steps) = (self.instruction_parser)(line);
             self.perimeter += steps;
             let next_position = self.dig(&direction, steps);
             self.current_position = next_position.clone();
@@ -80,6 +79,30 @@ impl Digger {
     }
 }
 
+fn parse_instruction(raw_instruction: String) -> (String, isize) {
+    let line_parts = raw_instruction.split(" (").collect::<Vec<_>>();
+    let dig_instruction = line_parts[0];
+    let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
+    let direction = instruction_parts[0];
+    let steps = instruction_parts[1].parse::<isize>().unwrap();
+    (direction.to_string(), steps)
+}
+
+fn parse_instruction_color(raw_instruction: String) -> (String, isize) {
+    let line_parts = raw_instruction.split(" (").collect::<Vec<_>>();
+    let color = line_parts[1].split(")").collect::<Vec<_>>()[0].chars().collect::<Vec<_>>();
+    let direction = match color.last().unwrap() {
+        '0' => "R",
+        '1' => "D",
+        '2' => "L",
+        '3' => "U",
+        _ => panic!("unexpected direction")
+    };
+    let hex = color[1..color.len() - 1].iter().collect::<String>();
+    let steps = isize::from_str_radix(&hex, 16).unwrap();
+    (direction.to_string(), steps)
+}
+
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
@@ -88,10 +111,11 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_part() {
+    fn it_solves_puzzle() {
         let input = &read_input_file("input_day18.txt");
 
-        assert_eq!(45159, calculate_cubic_meters_of_lava(input));
+        assert_eq!(45159, calculate_cubic_meters_of_lava(input, &mut Digger::new()));
+        assert_eq!(134549294799713, calculate_cubic_meters_of_lava(input, &mut Digger::build_with_color_instruction()));
     }
 
     #[test]
@@ -112,6 +136,12 @@ mod tests {
         L 2 (#015232)
         U 2 (#7a21e3)"};
 
-        assert_eq!(62, calculate_cubic_meters_of_lava(input));
+        assert_eq!(62, calculate_cubic_meters_of_lava(input, &mut Digger::new()));
+        assert_eq!(952408144115, calculate_cubic_meters_of_lava(input, &mut Digger::build_with_color_instruction()));
+    }
+
+    #[test]
+    fn it_parses_color_instruction() {
+        assert_eq!(("R".to_string(), 461937), parse_instruction_color("R 6 (#70c710)".to_string()))
     }
 }
