@@ -7,7 +7,7 @@ fn calculate_cubic_meters_of_lava(input: &str, digger: &mut Digger) -> isize {
     digger.perimeter + number_of_internal_tranches(&digger.polygon, digger.perimeter)
 }
 
-// Calculate enclosed point using Pick's theorem
+// Calculate number of internal tranches using Pick's theorem
 // https://en.wikipedia.org/wiki/Pick's_theorem
 fn number_of_internal_tranches(polygon: &Vec<Position>, perimeter: isize) -> isize {
     let area = calculate_area(&polygon);
