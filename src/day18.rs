@@ -33,11 +33,6 @@ fn calculate_area(polygon: &Vec<Position>) -> isize {
 #[derive(Debug, Hash, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct Position(isize, isize);
 
-struct Trench {
-    position: Position,
-    color: String,
-}
-
 struct Digger {
     current_position: Position,
     perimeter: isize,
@@ -48,9 +43,7 @@ impl Digger {
     fn new() -> Self {
         Digger { current_position: Position(0, 0), perimeter: 0, polygon: vec![Position(1, 0)] }
     }
-    fn find_tranches(&mut self, input: &str) -> Vec<Trench> {
-        let mut trenches: Vec<Trench> = vec![];
-
+    fn find_tranches(&mut self, input: &str) {
         for line in read_lines(input) {
             let line_parts = line.split(" (").collect::<Vec<_>>();
             let dig_instruction = line_parts[0];
@@ -59,45 +52,20 @@ impl Digger {
             let direction = instruction_parts[0];
             let steps = instruction_parts[1].parse::<isize>().unwrap();
             self.perimeter += steps;
-            self.dig(&mut trenches, direction, steps, color);
+            let next_position = self.dig(direction, steps);
+            self.current_position = next_position.clone();
             self.polygon.push(self.current_position.clone());
         }
-
-        trenches
     }
 
-    fn dig(&mut self, positions: &mut Vec<Trench>, direction: &str, steps: isize, color: &str) {
+    fn dig(&mut self, direction: &str, steps: isize) -> Position {
         match direction {
-            "U" => self.dig_up(positions, steps, color),
-            "D" => self.dig_down(positions, steps, color),
-            "R" => self.dig_right(positions, steps, color),
-            "L" => self.dig_left(positions, steps, color),
+            "U" => Position(self.current_position.0, self.current_position.1 - steps),
+            "D" => Position(self.current_position.0, self.current_position.1 + steps),
+            "R" => Position(self.current_position.0 + steps, self.current_position.1),
+            "L" => Position(self.current_position.0 - steps, self.current_position.1),
             _ => panic!("unknown instruction")
         }
-    }
-
-    fn dig_up(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
-        let next_position = Position(self.current_position.0, self.current_position.1 - steps);
-        positions.push(Trench { position: next_position, color: color.to_string() });
-        self.current_position = next_position.clone();
-    }
-
-    fn dig_down(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
-        let next_position = Position(self.current_position.0, self.current_position.1 + steps);
-        positions.push(Trench { position: next_position, color: color.to_string() });
-        self.current_position = next_position.clone();
-    }
-
-    fn dig_right(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
-        let next_position = Position(self.current_position.0 + steps, self.current_position.1);
-        positions.push(Trench { position: next_position, color: color.to_string() });
-        self.current_position = next_position.clone();
-    }
-
-    fn dig_left(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
-        let next_position = Position(self.current_position.0 - steps, self.current_position.1);
-        positions.push(Trench { position: next_position, color: color.to_string() });
-        self.current_position = next_position.clone();
     }
 }
 
