@@ -33,26 +33,37 @@ fn calculate_area(polygon: &Vec<Position>) -> isize {
 #[derive(Debug, Hash, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct Position(isize, isize);
 
+fn parse_instruction(raw_instruction: String) -> (String, isize) {
+    let line_parts = raw_instruction.split(" (").collect::<Vec<_>>();
+    let dig_instruction = line_parts[0];
+    let color = line_parts[1].split(")").collect::<Vec<_>>()[0];
+    let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
+    let direction = instruction_parts[0];
+    let steps = instruction_parts[1].parse::<isize>().unwrap();
+    (direction.to_string(), steps)
+}
+
 struct Digger {
     current_position: Position,
     perimeter: isize,
     polygon: Vec<Position>,
+    instruction_parser: fn(String) -> (String, isize)
 }
 
 impl Digger {
     fn new() -> Self {
-        Digger { current_position: Position(0, 0), perimeter: 0, polygon: vec![Position(1, 0)] }
+        Digger {
+            current_position: Position(0, 0),
+            perimeter: 0,
+            polygon: vec![Position(1, 0)],
+            instruction_parser: parse_instruction
+        }
     }
     fn find_tranches(&mut self, input: &str) {
         for line in read_lines(input) {
-            let line_parts = line.split(" (").collect::<Vec<_>>();
-            let dig_instruction = line_parts[0];
-            let color = line_parts[1].split(")").collect::<Vec<_>>()[0];
-            let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
-            let direction = instruction_parts[0];
-            let steps = instruction_parts[1].parse::<isize>().unwrap();
+            let(direction, steps) = parse_instruction(line);
             self.perimeter += steps;
-            let next_position = self.dig(direction, steps);
+            let next_position = self.dig(&direction, steps);
             self.current_position = next_position.clone();
             self.polygon.push(self.current_position.clone());
         }
