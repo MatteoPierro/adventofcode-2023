@@ -2,19 +2,18 @@ use std::ops::Div;
 
 use crate::input_reader::read_lines;
 
-fn calculate_cubic_meters_of_lava(input: &str) -> usize {
+fn calculate_cubic_meters_of_lava(input: &str) -> isize {
     let mut digger = Digger::new();
-    let tranches: Vec<Trench> = digger.find_tranches(input);
-    tranches.len() + number_of_internal_tranches(&tranches)
+    digger.find_tranches(input);
+    digger.perimeter + number_of_internal_tranches(&digger.polygon, digger.perimeter)
 }
 
 // Calculate enclosed point using Pick's theorem
 // https://en.wikipedia.org/wiki/Pick's_theorem
-fn number_of_internal_tranches(tranches: &Vec<Trench>) -> usize {
-    let polygon = tranches.iter().map(|t| t.position).collect::<Vec<_>>();
+fn number_of_internal_tranches(polygon: &Vec<Position>, perimeter: isize) -> isize {
     let area = calculate_area(&polygon);
-    let b = polygon.iter().count() as isize;
-    (area + 1 - (b / 2)) as usize
+    let b = perimeter;
+    area + 1 - (b / 2)
 }
 
 // Calculate area using the Shoelace formula
@@ -41,11 +40,13 @@ struct Trench {
 
 struct Digger {
     current_position: Position,
+    perimeter: isize,
+    polygon: Vec<Position>,
 }
 
 impl Digger {
     fn new() -> Self {
-        Digger { current_position: Position(0, 0) }
+        Digger { current_position: Position(0, 0), perimeter: 0, polygon: vec![Position(1, 0)] }
     }
     fn find_tranches(&mut self, input: &str) -> Vec<Trench> {
         let mut trenches: Vec<Trench> = vec![];
@@ -56,14 +57,16 @@ impl Digger {
             let color = line_parts[1].split(")").collect::<Vec<_>>()[0];
             let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
             let direction = instruction_parts[0];
-            let steps = instruction_parts[1].parse::<usize>().unwrap();
-            self.dig(&mut trenches, direction, steps, color)
+            let steps = instruction_parts[1].parse::<isize>().unwrap();
+            self.perimeter += steps;
+            self.dig(&mut trenches, direction, steps, color);
+            self.polygon.push(self.current_position.clone());
         }
 
         trenches
     }
 
-    fn dig(&mut self, positions: &mut Vec<Trench>, direction: &str, steps: usize, color: &str) {
+    fn dig(&mut self, positions: &mut Vec<Trench>, direction: &str, steps: isize, color: &str) {
         match direction {
             "U" => self.dig_up(positions, steps, color),
             "D" => self.dig_down(positions, steps, color),
@@ -73,36 +76,28 @@ impl Digger {
         }
     }
 
-    fn dig_up(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
-        for _ in 1..=steps {
-            let next_position = Position(self.current_position.0, self.current_position.1 - 1);
-            positions.push(Trench { position: next_position, color: color.to_string() });
-            self.current_position = next_position.clone();
-        }
+    fn dig_up(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
+        let next_position = Position(self.current_position.0, self.current_position.1 - steps);
+        positions.push(Trench { position: next_position, color: color.to_string() });
+        self.current_position = next_position.clone();
     }
 
-    fn dig_down(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
-        for _ in 1..=steps {
-            let next_position = Position(self.current_position.0, self.current_position.1 + 1);
-            positions.push(Trench { position: next_position, color: color.to_string() });
-            self.current_position = next_position.clone();
-        }
+    fn dig_down(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
+        let next_position = Position(self.current_position.0, self.current_position.1 + steps);
+        positions.push(Trench { position: next_position, color: color.to_string() });
+        self.current_position = next_position.clone();
     }
 
-    fn dig_right(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
-        for _ in 1..=steps {
-            let next_position = Position(self.current_position.0 + 1, self.current_position.1);
-            positions.push(Trench { position: next_position, color: color.to_string() });
-            self.current_position = next_position.clone();
-        }
+    fn dig_right(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
+        let next_position = Position(self.current_position.0 + steps, self.current_position.1);
+        positions.push(Trench { position: next_position, color: color.to_string() });
+        self.current_position = next_position.clone();
     }
 
-    fn dig_left(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
-        for _ in 1..=steps {
-            let next_position = Position(self.current_position.0 - 1, self.current_position.1);
-            positions.push(Trench { position: next_position, color: color.to_string() });
-            self.current_position = next_position.clone();
-        }
+    fn dig_left(&mut self, positions: &mut Vec<Trench>, steps: isize, color: &str) {
+        let next_position = Position(self.current_position.0 - steps, self.current_position.1);
+        positions.push(Trench { position: next_position, color: color.to_string() });
+        self.current_position = next_position.clone();
     }
 }
 
