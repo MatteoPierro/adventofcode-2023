@@ -25,3 +25,4 @@ cargo test dayXY::tests
 - [Day 15: Lens Library](./src/day15.rs)
 - [Day 16: The Floor Will Be Lava](./src/day16.rs)
 - [Day 17: Clumsy Crucible](./src/day17.rs)
+- [Day 18: Lavaduct Lagoon](./src/day18.rs)
