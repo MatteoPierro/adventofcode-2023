@@ -1,24 +1,20 @@
 use std::ops::Div;
+
 use crate::input_reader::read_lines;
 
 fn calculate_cubic_meters_of_lava(input: &str) -> usize {
-    let mut digger = Digger { current_position: Position(0, 0) };
-    let mut positions: Vec<Position> = vec![];
+    let mut digger = Digger::new();
+    let tranches: Vec<Trench> = digger.find_tranches(input);
+    tranches.len() + number_of_internal_tranches(&tranches)
+}
 
-    for line in read_lines(input) {
-        let line_parts = line.split(" (").collect::<Vec<_>>();
-        let dig_instruction = line_parts[0];
-        let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
-        let direction = instruction_parts[0];
-        let steps = instruction_parts[1].parse::<usize>().unwrap();
-        digger.dig(&mut positions, direction, steps)
-    }
-
-    let area = calculate_area(&positions);
-    let b = positions.iter().count() as isize;
-    let internal_trench = (area + 1 - (b / 2)) as usize;
-
-    positions.len() + internal_trench
+// Calculate enclosed point using Pick's theorem
+// https://en.wikipedia.org/wiki/Pick's_theorem
+fn number_of_internal_tranches(tranches: &Vec<Trench>) -> usize {
+    let polygon = tranches.iter().map(|t| t.position).collect::<Vec<_>>();
+    let area = calculate_area(&polygon);
+    let b = polygon.iter().count() as isize;
+    (area + 1 - (b / 2)) as usize
 }
 
 // Calculate area using the Shoelace formula
@@ -38,48 +34,73 @@ fn calculate_area(polygon: &Vec<Position>) -> isize {
 #[derive(Debug, Hash, Copy, Clone, Eq, PartialEq, PartialOrd, Ord)]
 struct Position(isize, isize);
 
+struct Trench {
+    position: Position,
+    color: String,
+}
+
 struct Digger {
-    current_position: Position
+    current_position: Position,
 }
 
 impl Digger {
-    fn dig(&mut self, positions: &mut Vec<Position>, direction: &str, steps: usize) {
+    fn new() -> Self {
+        Digger { current_position: Position(0, 0) }
+    }
+    fn find_tranches(&mut self, input: &str) -> Vec<Trench> {
+        let mut trenches: Vec<Trench> = vec![];
+
+        for line in read_lines(input) {
+            let line_parts = line.split(" (").collect::<Vec<_>>();
+            let dig_instruction = line_parts[0];
+            let color = line_parts[1].split(")").collect::<Vec<_>>()[0];
+            let instruction_parts = dig_instruction.split(" ").collect::<Vec<_>>();
+            let direction = instruction_parts[0];
+            let steps = instruction_parts[1].parse::<usize>().unwrap();
+            self.dig(&mut trenches, direction, steps, color)
+        }
+
+        trenches
+    }
+
+    fn dig(&mut self, positions: &mut Vec<Trench>, direction: &str, steps: usize, color: &str) {
         match direction {
-            "U" => self.dig_up(positions, steps),
-            "D" => self.dig_down(positions, steps),
-            "R" => self.dig_right(positions, steps),
-            "L" => self.dig_left(positions, steps),
+            "U" => self.dig_up(positions, steps, color),
+            "D" => self.dig_down(positions, steps, color),
+            "R" => self.dig_right(positions, steps, color),
+            "L" => self.dig_left(positions, steps, color),
             _ => panic!("unknown instruction")
         }
     }
-    fn dig_up(&mut self, positions: &mut Vec<Position>, steps: usize) {
+
+    fn dig_up(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
         for _ in 1..=steps {
             let next_position = Position(self.current_position.0, self.current_position.1 - 1);
-            positions.push(next_position);
+            positions.push(Trench { position: next_position, color: color.to_string() });
             self.current_position = next_position.clone();
         }
     }
 
-    fn dig_down(&mut self, positions: &mut Vec<Position>, steps: usize) {
+    fn dig_down(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
         for _ in 1..=steps {
             let next_position = Position(self.current_position.0, self.current_position.1 + 1);
-            positions.push(next_position);
+            positions.push(Trench { position: next_position, color: color.to_string() });
             self.current_position = next_position.clone();
         }
     }
 
-    fn dig_right(&mut self, positions: &mut Vec<Position>, steps: usize) {
+    fn dig_right(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
         for _ in 1..=steps {
             let next_position = Position(self.current_position.0 + 1, self.current_position.1);
-            positions.push(next_position);
+            positions.push(Trench { position: next_position, color: color.to_string() });
             self.current_position = next_position.clone();
         }
     }
 
-    fn dig_left(&mut self, positions: &mut Vec<Position>, steps: usize) {
+    fn dig_left(&mut self, positions: &mut Vec<Trench>, steps: usize, color: &str) {
         for _ in 1..=steps {
             let next_position = Position(self.current_position.0 - 1, self.current_position.1);
-            positions.push(next_position);
+            positions.push(Trench { position: next_position, color: color.to_string() });
             self.current_position = next_position.clone();
         }
     }
@@ -88,7 +109,8 @@ impl Digger {
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
-    use crate::day18::calculate_cubic_meters_of_lava;
+
+    use crate::day18::*;
     use crate::input_reader::read_input_file;
 
     #[test]
