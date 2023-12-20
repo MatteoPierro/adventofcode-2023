@@ -27,3 +27,4 @@ cargo test dayXY::tests
 - [Day 17: Clumsy Crucible](./src/day17.rs)
 - [Day 18: Lavaduct Lagoon](./src/day18.rs)
 - [Day 19: Aplenty](./src/day19.rs)
+- [Day 20: Pulse Propagation](./src/day20.rs)

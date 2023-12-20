@@ -17,6 +17,7 @@ enum Modules {
 mod tests {
     use std::collections::{HashMap, LinkedList};
     use indoc::indoc;
+    use num::integer::lcm;
     use crate::day20::Modules::{Broadcaster, Conjunction, FlipFlop};
     use crate::day20::{Modules, Pulse};
     use crate::day20::Pulse::{High, Low};
@@ -29,6 +30,20 @@ mod tests {
         let mut configuration = parse_configuration(input);
         let (low_pulses, high_pulses) = count_pulses(&mut configuration);
         assert_eq!(743871576, low_pulses * high_pulses);
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = &read_input_file("input_day20.txt");
+
+        // manual hack based on my input
+        assert_eq!(3907, steps_to_turn_on_the_machine(&mut parse_configuration(input), "ph".to_string(), "kc".to_string()));
+        assert_eq!(3797, steps_to_turn_on_the_machine(&mut parse_configuration(input), "vn".to_string(), "kc".to_string()));
+        assert_eq!(4093, steps_to_turn_on_the_machine(&mut parse_configuration(input), "kt".to_string(), "kc".to_string()));
+        assert_eq!(4021, steps_to_turn_on_the_machine(&mut parse_configuration(input), "hn".to_string(), "kc".to_string()));
+        let values:[usize; 4] = [3907, 3797, 4093, 4021];
+        let result= values.into_iter().reduce(|a, b| lcm(a, b)).unwrap();
+        assert_eq!(244151741342687, result)
     }
 
     #[test]
@@ -49,10 +64,32 @@ mod tests {
 
         let mut configuration = parse_configuration(input);
 
-        // println!("{:?}", configuration);
-
         let (low_pulses, high_pulses) = count_pulses(&mut configuration);
         assert_eq!(11687500, low_pulses * high_pulses);
+    }
+
+    fn steps_to_turn_on_the_machine(configuration: &mut HashMap<String, Modules>, s: String, d: String) -> usize {
+        let mut steps_to_turn_on_the_machine: usize = 0;
+
+        loop {
+            steps_to_turn_on_the_machine += 1;
+            let mut sequence: LinkedList<(String, String, Pulse)> = LinkedList::new();
+            sequence.push_back(("button".to_string(), "broadcaster".to_string(), Low));
+            while let Some((source, destination, pulse)) = sequence.pop_front() {
+                if source == s && destination == d && pulse == High {
+                    return steps_to_turn_on_the_machine
+                }
+
+                if !configuration.contains_key(&destination) {
+                    continue
+                }
+                match configuration.get_mut(&destination).unwrap() {
+                    FlipFlop(state, outputs) => handle_flip_flop(&mut sequence, pulse, state, outputs, &destination),
+                    Conjunction(inputs, outputs) => handling_conjunctions(&mut sequence, inputs, outputs, source, &destination, pulse),
+                    Broadcaster(outputs) => handle_broadcaster(&mut sequence, outputs, pulse)
+                }
+            }
+        }
     }
 
     fn count_pulses(configuration: &mut HashMap<String, Modules>) -> (usize, usize) {
@@ -63,7 +100,6 @@ mod tests {
             let mut sequence: LinkedList<(String, String, Pulse)> = LinkedList::new();
             sequence.push_back(("button".to_string(), "broadcaster".to_string(), Low));
             while let Some((source, destination, pulse)) = sequence.pop_front() {
-                // println!("source {:?} destination {:?} pulse {:?}", source, destination, pulse);
                 if pulse == Low {
                     low_pulses += 1;
                 } else {
@@ -79,8 +115,6 @@ mod tests {
                     Broadcaster(outputs) => handle_broadcaster(&mut sequence, outputs, pulse)
                 }
             }
-            // println!();
-            // println!();
         }
         (low_pulses, high_pulses)
     }
