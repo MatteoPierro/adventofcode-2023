@@ -28,3 +28,5 @@ cargo test dayXY::tests
 - [Day 18: Lavaduct Lagoon](./src/day18.rs)
 - [Day 19: Aplenty](./src/day19.rs)
 - [Day 20: Pulse Propagation](./src/day20.rs)
+- [Day 21: Step Counter](./src/day21.rs)
+  - Solution largely inspired by [this video](https://www.youtube.com/watch?v=9UOMZSL0JTg)

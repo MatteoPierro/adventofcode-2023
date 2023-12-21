@@ -58,7 +58,7 @@ impl Grid {
                 }
 
                 if seen.contains(&p) {
-                    continue
+                    continue;
                 }
 
                 seen.insert(p);
@@ -82,6 +82,56 @@ mod tests {
         let input = &read_input_file("input_day21.txt");
 
         assert_eq!(3729, Grid::build_from(input).fill(Grid::build_from(input).start, 64))
+    }
+
+    #[test]
+    fn it_solves_second_part() {
+        let input = &read_input_file("input_day21.txt");
+
+        let grid = Grid::build_from(input);
+        // grid is a square
+        assert_eq!(grid.length, grid.width);
+        let size = grid.length;
+
+        // star is in the middle of the grid
+        let start = grid.start;
+        assert_eq!(start.0, start.1);
+        assert_eq!(start.0, size / 2);
+
+        // best case we can arrive at the middle of a grid
+        let steps: isize = 26501365;
+        assert_eq!(steps % size, size / 2);
+
+        let grid_width = (steps / size - 1) as usize;
+
+        let odd = (grid_width / 2 * 2 + 1).pow(2);
+        let even = ((grid_width + 1) / 2 * 2).pow(2);
+
+        let odd_points = grid.fill(start, (size + 2) as usize);
+        let even_points = grid.fill(start, (size + 1) as usize);
+
+        let corner_t = grid.fill((start.0, size - 1), (size - 1) as usize);
+        let corner_r = grid.fill((size - 1, start.1), (size - 1) as usize);
+        let corner_l = grid.fill((start.0, 0), (size - 1) as usize);
+        let corner_b = grid.fill((0, start.1), (size - 1) as usize);
+
+        let small_tr = grid.fill((size - 1, 0), (size / 2 - 1) as usize);
+        let small_tl = grid.fill((size - 1, size - 1), (size / 2 - 1) as usize);
+        let small_br = grid.fill((0, 0), (size / 2 - 1) as usize);
+        let small_bl = grid.fill((0, size - 1), (size / 2 - 1) as usize);
+
+        let large_tr = grid.fill((size - 1, 0), (size * 3 / 2 - 1) as usize);
+        let large_tl = grid.fill((size - 1, size - 1), (size * 3 / 2 - 1) as usize);
+        let large_br = grid.fill((0, 0), (size * 3 / 2 - 1) as usize);
+        let large_bl = grid.fill((0, size - 1), (size * 3 / 2 - 1) as usize);
+
+        let total = odd * odd_points +
+            even * even_points +
+            corner_t + corner_r + corner_b + corner_l +
+            (grid_width + 1) * (small_tr + small_tl + small_br + small_bl) +
+            grid_width * (large_tr + large_tl + large_br + large_bl);
+
+        assert_eq!(621289922886149, total);
     }
 
     #[test]
