@@ -1,4 +1,7 @@
 use std::cmp::{max, min};
+use std::collections::{HashMap, HashSet};
+
+use crate::input_reader::read_lines;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 struct Position {
@@ -18,6 +21,64 @@ impl Position {
 struct Brick {
     start: Position,
     end: Position,
+}
+
+struct Snapshot {
+    bricks: Vec<Brick>,
+    supporting_bricks: HashMap<Brick, HashSet<Brick>>,
+    supported_bricks: HashMap<Brick, HashSet<Brick>>,
+}
+
+impl Snapshot {
+    fn new(input: &str) -> Self {
+        let mut bricks = read_lines(input).iter().map(|line| {
+            let parts = line.split("~").collect::<Vec<_>>();
+            Brick { start: Position::new(parts[0]), end: Position::new(parts[1]) }
+        }).collect::<Vec<_>>();
+
+        free_fall(&mut bricks);
+
+        let mut supporting_bricks: HashMap<Brick, HashSet<Brick>> = HashMap::new();
+        let mut supported_bricks: HashMap<Brick, HashSet<Brick>> = HashMap::new();
+        for current_index in 0..bricks.len() {
+            let current = &bricks[current_index];
+            let mut current_supported_bricks = HashSet::new();
+            let mut next_index = current_index + 1;
+            while next_index < bricks.len() {
+                let next = &bricks[next_index];
+                if next.start.z > current.end.z + 1 {
+                    break;
+                }
+
+                if next.is_overlapped_by(current) {
+                    current_supported_bricks.insert((*next).clone());
+                }
+
+                next_index += 1;
+            }
+
+            for b in &current_supported_bricks {
+                let current_supporting_bricks = supported_bricks.entry((*b).clone()).or_insert(HashSet::new());
+                current_supporting_bricks.insert((*current).clone());
+            }
+
+            supporting_bricks.insert((*current).clone(), current_supported_bricks);
+        }
+
+        Snapshot { bricks, supporting_bricks, supported_bricks }
+    }
+
+    fn count_disintegrable_bricks(&self) -> usize {
+        let mut count: usize = 0;
+
+        for b in self.supporting_bricks.keys() {
+            if self.supporting_bricks[b].iter().all(|sb| self.supported_bricks[sb].len() >= 2) {
+                count += 1;
+            }
+        }
+
+        count
+    }
 }
 
 fn free_fall(bricks: &mut Vec<Brick>) {
@@ -56,16 +117,16 @@ impl Brick {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{HashMap, HashSet};
     use indoc::indoc;
+
     use crate::day22::*;
-    use crate::input_reader::{read_input_file, read_lines};
+    use crate::input_reader::read_input_file;
 
     #[test]
     fn it_solves_first_puzzle() {
         let input = &read_input_file("input_day22.txt");
 
-        assert_eq!(527, count_disintegrable_bricks(input));
+        assert_eq!(527, Snapshot::new(input).count_disintegrable_bricks());
     }
 
     #[test]
@@ -79,51 +140,6 @@ mod tests {
             0,1,6~2,1,6
             1,1,8~1,1,9"};
 
-        assert_eq!(5, count_disintegrable_bricks(input));
-    }
-
-    fn count_disintegrable_bricks(input: &str) -> usize {
-        let mut bricks = read_lines(input).iter().map(|line| {
-            let parts = line.split("~").collect::<Vec<_>>();
-            Brick { start: Position::new(parts[0]), end: Position::new(parts[1]) }
-        }).collect::<Vec<_>>();
-
-        free_fall(&mut bricks);
-
-        let mut supporting_bricks: HashMap<Brick, HashSet<Brick>> = HashMap::new();
-        let mut supported_bricks: HashMap<Brick, HashSet<Brick>> = HashMap::new();
-        for current_index in 0..bricks.len() {
-            let current = &bricks[current_index];
-            let mut current_supported_bricks = HashSet::new();
-            let mut next_index = current_index + 1;
-            while next_index < bricks.len() {
-                let next = &bricks[next_index];
-                if next.start.z > current.end.z + 1 {
-                    break;
-                }
-
-                if next.is_overlapped_by(current) {
-                    current_supported_bricks.insert((*next).clone());
-                }
-
-                next_index += 1;
-            }
-
-            for b in &current_supported_bricks {
-                let current_supporting_bricks = supported_bricks.entry((*b).clone()).or_insert(HashSet::new());
-                current_supporting_bricks.insert((*current).clone());
-            }
-
-            supporting_bricks.insert((*current).clone(), current_supported_bricks);
-        }
-
-        let mut count: usize = 0;
-        for b in supporting_bricks.keys() {
-            if supporting_bricks[b].iter().all(|sb| supported_bricks[sb].len() >= 2) {
-                count += 1;
-            }
-        }
-
-        count
+        assert_eq!(5, Snapshot::new(input).count_disintegrable_bricks());
     }
 }
