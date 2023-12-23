@@ -30,3 +30,4 @@ cargo test dayXY::tests
 - [Day 20: Pulse Propagation](./src/day20.rs)
 - [Day 21: Step Counter](./src/day21.rs)
   - Solution largely inspired by [this video](https://www.youtube.com/watch?v=9UOMZSL0JTg)
+- [Day 22: Sand Slabs](./src/day22.rs)

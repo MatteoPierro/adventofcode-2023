@@ -79,6 +79,31 @@ impl Snapshot {
 
         count
     }
+
+    fn chain_reaction(&self) -> usize {
+        let mut total = 0;
+
+        for brick in &self.bricks {
+            let mut chain_reaction = HashSet::new();
+            chain_reaction.insert(brick.clone());
+            let mut continuing = true;
+            let mut visited = HashSet::new();
+            while continuing {
+                continuing = false;
+                for key in self.supported_bricks.keys() {
+                    let value = &self.supported_bricks[key];
+                    if value.is_subset(&chain_reaction) && !visited.contains(key) {
+                        chain_reaction.insert(key.clone());
+                        visited.insert(key.clone());
+                        continuing = true;
+                    }
+                }
+            }
+            total += chain_reaction.len() - 1
+        }
+
+        total
+    }
 }
 
 fn free_fall(bricks: &mut Vec<Brick>) {
@@ -123,10 +148,18 @@ mod tests {
     use crate::input_reader::read_input_file;
 
     #[test]
-    fn it_solves_first_puzzle() {
+    fn it_solves_first_part() {
         let input = &read_input_file("input_day22.txt");
 
         assert_eq!(527, Snapshot::new(input).count_disintegrable_bricks());
+    }
+
+    #[test]
+    #[ignore] // runs in 11 seconds
+    fn it_solves_second_part() {
+        let input = &read_input_file("input_day22.txt");
+
+        assert_eq!(100376, Snapshot::new(input).chain_reaction());
     }
 
     #[test]
@@ -141,5 +174,19 @@ mod tests {
             1,1,8~1,1,9"};
 
         assert_eq!(5, Snapshot::new(input).count_disintegrable_bricks());
+    }
+
+    #[test]
+    fn it_calculates_chain_reaction() {
+        let input = indoc! {"
+            1,0,1~1,2,1
+            0,0,2~2,0,2
+            0,2,3~2,2,3
+            0,0,4~0,2,4
+            2,0,5~2,2,5
+            0,1,6~2,1,6
+            1,1,8~1,1,9"};
+
+        assert_eq!(7, Snapshot::new(input).chain_reaction());
     }
 }
