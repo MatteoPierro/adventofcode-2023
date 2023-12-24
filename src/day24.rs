@@ -86,6 +86,8 @@ fn are_hails_intersecting(hail: &Hail, other: &Hail, test_area: (f64, f64)) -> b
 #[cfg(test)]
 mod tests {
     use indoc::indoc;
+    // use z3::*;
+    // use z3::ast::{Ast, Int};
 
     use crate::day24::*;
     use crate::input_reader::read_input_file;
@@ -95,6 +97,7 @@ mod tests {
         let input = &read_input_file("input_day24.txt");
 
         assert_eq!(12740, count_intersecting_hails(parse_hails(input), (200000000000000.0, 400000000000000.0)));
+        // part 2 right answer is 741991571910536
     }
 
     #[test]
@@ -107,5 +110,36 @@ mod tests {
         20, 19, 15 @  1, -5, -3"};
 
         assert_eq!(2, count_intersecting_hails(parse_hails(input), (7.0, 27.0)));
+
+        // let cfg = Config::new();
+        // let ctx = Context::new(&cfg);
+        // let solver = Solver::new(&ctx);
+        //
+        // let x0 = Int::new_const(&ctx, "xo");
+        // let y0 = Int::new_const(&ctx, "y0");
+        // let z0 = Int::new_const(&ctx, "z0");
+        // let vx = Int::new_const(&ctx, "vx");
+        // let vy = Int::new_const(&ctx, "vy");
+        // let vz = Int::new_const(&ctx, "vz");
+        //
+        // let hails = parse_hails(input);
+        //
+        // for index in 0..3 {
+        //     let hail = &hails[index];
+        //     let vhx = Int::from_i64(&ctx,hail.end.0 as i64 - hail.start.0 as i64);
+        //     let vhy = Int::from_i64(&ctx,hail.end.1 as i64 - hail.start.1 as i64);
+        //     let vhz = Int::from_i64(&ctx,hail.end.2 as i64 - hail.start.2 as i64);
+        //     let x = Int::from_i64(&ctx, hail.start.0 as i64);
+        //     let y = Int::from_i64(&ctx, hail.start.1 as i64);
+        //     let z = Int::from_i64(&ctx, hail.start.2 as i64);
+        //     let t = Int::fresh_const(&ctx, &format!("t{}", index + 1));
+        //
+        //     solver.assert(&(&vhx * &t + &x)._eq(&(*&&vx * &t + &x0)));
+        //     solver.assert(&(&vhy * &t + &y)._eq(&(*&&vy * &t + &y0)));
+        //     solver.assert(&(&vhz * &t + &z)._eq(&(*&&vy * &t + &z0)));
+        // }
+        //
+        // solver.check();
+        // let model = solver.get_model().unwrap();
     }
 }

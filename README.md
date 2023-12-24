@@ -33,3 +33,6 @@ cargo test dayXY::tests
 - [Day 22: Sand Slabs](./src/day22.rs)
 - [Day 23: A Long Walk](./src/day23.rs)
   - For second part helped watching [this video](https://www.youtube.com/watch?v=NTLYL7Mg2jU)
+- [Day 24: Never Tell Me The Odds](./src/day24.rs)
+  - Tried to solve second part with [z3](https://github.com/Z3Prover/z3) but it was problematic to install it on my machine
+  - I ended solving part 2 with [Mathematica](https://www.wolfram.com/mathematica/)
