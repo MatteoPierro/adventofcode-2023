@@ -36,3 +36,4 @@ cargo test dayXY::tests
 - [Day 24: Never Tell Me The Odds](./src/day24.rs)
   - Tried to solve second part with [z3](https://github.com/Z3Prover/z3) but it was problematic to install it on my machine
   - I ended solving part 2 with [Mathematica](https://www.wolfram.com/mathematica/)
+- [Day 25: Snowverload](./src/day25.rs)
